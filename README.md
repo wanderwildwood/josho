@@ -8,6 +8,9 @@ Pick a folder of `.ly` files (Cabinet's chooser when Cabinet is installed); `\in
 folder are followed. See `SOURCES.md` for where every bundled binary comes from and `build/`
 for how they are built.
 
+Thanks to [zyny](https://forum.mudita.com/u/zyny) on the Mudita forum, whose request started
+this app.
+
 ## License
 
 GPL-3.0-only. See [LICENSE](LICENSE).
