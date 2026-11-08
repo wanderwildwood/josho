@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:freetype",
+  "name": "freetype 2.15.0 (native, in the bundled LilyPond)",
+  "description": "Software font engine capable of producing high-quality output",
+  "website": "https://www.freetype.org",
+  "licenses": [
+    "josho-native-freetype"
+  ]
+}

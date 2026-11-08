@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libcrypt",
+  "name": "libcrypt 0.2-6 (native, in the bundled LilyPond)",
+  "description": "A crypt(3) implementation",
+  "website": "http://michael.dipperstein.com/crypt/",
+  "licenses": [
+    "josho-native-libcrypt"
+  ]
+}

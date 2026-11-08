@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:glib",
+  "name": "glib 2.90.1 (native, in the bundled LilyPond)",
+  "description": "Library providing core building blocks for libraries and applications written in C",
+  "website": "https://developer.gnome.org/glib/",
+  "licenses": [
+    "josho-native-glib"
+  ]
+}

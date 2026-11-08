@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libxdmcp",
+  "name": "libxdmcp 1.1.5-2 (native, in the bundled LilyPond)",
+  "description": "X11 Display Manager Control Protocol library",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-libxdmcp"
+  ]
+}

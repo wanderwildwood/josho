@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:ncurses",
+  "name": "ncurses 6.6.20260307+really6.5.20250830 (native, in the bundled LilyPond)",
+  "description": "Library for text-based user interfaces in a terminal-independent manner",
+  "website": "https://invisible-island.net/ncurses/",
+  "licenses": [
+    "josho-native-ncurses"
+  ]
+}

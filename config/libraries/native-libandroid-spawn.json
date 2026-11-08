@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libandroid-spawn",
+  "name": "libandroid-spawn 0.3 (native, in the bundled LilyPond)",
+  "description": "Shared library for the posix_spawn system function",
+  "website": "https://man7.org/linux/man-pages/man3/posix_spawn.3.html",
+  "licenses": [
+    "josho-native-libandroid-spawn"
+  ]
+}

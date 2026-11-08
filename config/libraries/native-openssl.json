@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:openssl",
+  "name": "openssl 1:3.6.5 (native, in the bundled LilyPond)",
+  "description": "Library implementing the SSL and TLS protocols as well as general purpose cryptography functions",
+  "website": "https://www.openssl.org/",
+  "licenses": [
+    "josho-native-openssl"
+  ]
+}

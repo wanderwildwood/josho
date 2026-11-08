@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:xorg-util-macros",
+  "name": "xorg-util-macros 1.20.2 (native, in the bundled LilyPond)",
+  "description": "X.Org Autotools macros",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-xorg-util-macros"
+  ]
+}

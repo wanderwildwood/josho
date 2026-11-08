@@ -1,0 +1,13 @@
+*.iml
+.gradle/
+.idea/
+build/out-*/
+local.properties
+.kotlin/
+signing/
+*.apk
+*.deb
+app/build/
+app/src/*/jniLibs/
+app/src/*/assets/prefix-*.zip
+app/src/*/assets/prefix-*.txt

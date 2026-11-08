@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:fribidi",
+  "name": "fribidi 1.0.18 (native, in the bundled LilyPond)",
+  "description": "Implementation of the Unicode Bidirectional Algorithm",
+  "website": "https://github.com/fribidi/fribidi/",
+  "licenses": [
+    "josho-native-fribidi"
+  ]
+}

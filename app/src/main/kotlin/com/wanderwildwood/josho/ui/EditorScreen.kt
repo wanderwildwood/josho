@@ -1,0 +1,426 @@
+package com.wanderwildwood.josho.ui
+
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mudita.mmd.components.text.TextMMD
+import com.wanderwildwood.josho.R
+import com.wanderwildwood.josho.engine.Doc
+import com.wanderwildwood.josho.engine.Folder
+import com.wanderwildwood.josho.engine.LilyPond
+import com.wanderwildwood.josho.engine.LogLine
+import com.wanderwildwood.josho.engine.offsetOf
+import com.wanderwildwood.josho.engine.parseLog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+
+private enum class Pane { Source, Score, Log }
+
+/** The keys LilyPond leans on that a soft keyboard hides on its second and third pages. */
+private val SYMBOLS = listOf("\\", "{", "}", "<", ">", "'", ",", "~", "(", ")", "[", "]", "|", "#", "%")
+
+/**
+ * A score open: its source, the engraved pages, LilyPond's messages. Held across, or on a wide
+ * screen (the Supernotes, anything 600 dp across), source and score sit side by side, with the
+ * log under the source's tab; a Kompakt held upright shows one pane at a time, by the tabs.
+ */
+@Composable
+fun EditorScreen(
+    doc: Doc,
+    folder: Folder,
+    lily: LilyPond,
+    textSize: Int,
+    autoCompile: Boolean,
+    autoCompileScheme: Boolean = false,
+    /** Debug only: "side" or "tabs" forces a layout, for comparing them in screenshots. */
+    layout: String? = null,
+    onBack: () -> Unit,
+    onAbout: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var text by remember(doc.id) { mutableStateOf<TextFieldValue?>(null) }
+    var savedText by remember(doc.id) { mutableStateOf("") }
+    var pane by remember(doc.id) { mutableStateOf(Pane.Source) }
+    var status by remember(doc.id) { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var log by remember(doc.id) { mutableStateOf<List<LogLine>>(emptyList()) }
+    var pdf by remember(doc.id) { mutableStateOf<File?>(null) }
+    var pdfStamp by remember(doc.id) { mutableStateOf(0L) }
+    var page by remember(doc.id) { mutableIntStateOf(0) }
+    val focus = remember { FocusRequester() }
+
+    // The kept LilyPond starts while the score is being read, so the first compile is quick too.
+    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { lily.warmUp() } }
+
+    LaunchedEffect(doc.id) {
+        val read = withContext(Dispatchers.IO) { runCatching { folder.read(doc) }.getOrDefault("") }
+        savedText = read
+        text = TextFieldValue(read)
+    }
+
+    fun save() {
+        val t = text?.text ?: return
+        if (t == savedText) return
+        runCatching { folder.write(doc, t) }.onSuccess { savedText = t }
+    }
+
+    fun compile(wide: Boolean) {
+        val t = text?.text ?: return
+        if (busy) return
+        busy = true
+        scope.launch {
+            status = context.getString(if (lily.isReady()) R.string.compiling else R.string.setting_up)
+            val outcome = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (t != savedText) folder.write(doc, t)
+                    val setUp = lily.prepare()
+                    if (setUp > 0) Log.i(TAG, "set up in $setUp ms")
+                    val source = folder.mirror(doc)
+                    val result = lily.compile(source.parentFile!!, source.name, autoCompileScheme)
+                    result.pdf?.let { folder.putBeside(doc, it, "application/pdf") }
+                    result.midi?.let { folder.putBeside(doc, it, "audio/midi") }
+                    Log.i(TAG, "compile: exit ${result.exit} in ${result.millis} ms; pdf ${result.pdf?.length() ?: "missing"}")
+                    result
+                }
+            }
+            busy = false
+            // Written before compiling, whatever came of it after.
+            if (outcome.isSuccess || outcome.exceptionOrNull() !is java.io.IOException) savedText = t
+            outcome.onFailure {
+                Log.e(TAG, "compile failed", it)
+                status = context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
+            }
+            outcome.onSuccess { r ->
+                log = parseLog(r.log)
+                val seconds = "%.1f".format(r.millis / 1000.0)
+                val warned = log.any { it.kind == LogLine.Kind.Warning }
+                status = when {
+                    r.exit != 0 -> context.getString(R.string.compile_failed)
+                    warned -> context.getString(R.string.compiled_with_warnings, seconds)
+                    else -> context.getString(R.string.compiled_in, seconds)
+                }
+                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0 }
+                pane = when {
+                    r.exit != 0 || r.pdf == null -> Pane.Log
+                    wide -> Pane.Source
+                    else -> Pane.Score
+                }
+            }
+        }
+    }
+
+    fun jumpTo(line: LogLine) {
+        val t = text ?: return
+        val at = offsetOf(t.text, line.line, line.column)
+        text = t.copy(selection = TextRange(at))
+        pane = Pane.Source
+        runCatching { focus.requestFocus() }
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = { Bar(doc.name, { save(); onBack() }, null, onAbout) },
+    ) { padding ->
+        BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
+            // Held across (a Kompakt across is 533 x 320 dp) or 600 dp wide (the Supernotes):
+            // source and score side by side. Upright on a phone: one pane at a time, by tabs.
+            val landscape = maxWidth > maxHeight
+            val wide = when (layout) { "side" -> true; "tabs" -> false; else -> maxWidth >= 600.dp || landscape }
+            // Short of height (a Kompakt across): one header row, and the symbol keys in two
+            // short rows under the source, so the score keeps the column's full height.
+            val across = landscape && maxHeight < 480.dp
+            LaunchedEffect(text != null, autoCompile) { if (autoCompile && text != null) compile(wide) }
+            val keys = Modifier.onPreviewKeyEvent { e ->
+                if (e.type != KeyEventType.KeyDown || !e.isCtrlPressed) false
+                else when (e.key) {
+                    Key.Enter, Key.M -> { compile(wide); true }   // Ctrl+M is Frescobaldi's Engrave
+                    Key.S -> { save(); true }
+                    else -> false
+                }
+            }
+            val tabs = if (wide) listOf(Pane.Source, Pane.Log) else Pane.entries
+            val labels = tabs.map {
+                stringResource(when (it) { Pane.Source -> R.string.tab_source; Pane.Score -> R.string.tab_score; Pane.Log -> R.string.tab_log })
+            }
+            val shown = if (wide && pane == Pane.Score) Pane.Source else pane
+            val statusText = status.ifEmpty { if ((text?.text ?: savedText) != savedText) stringResource(R.string.unsaved) else "" }
+            Column(keys.fillMaxSize()) {
+                if (across) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        HouseButton(stringResource(R.string.compile), { compile(wide) }, on = true, enabled = !busy && text != null, compact = true)
+                        StoneTabs(labels, tabs.indexOf(shown), { pane = tabs[it] }, Modifier.weight(1.4f), rule = false)
+                        TextMMD(text = statusText, style = MaterialTheme.typography.labelSmall, maxLines = 2, modifier = Modifier.weight(1f))
+                    }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.onSurface))
+                } else {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        HouseButton(stringResource(R.string.compile), { compile(wide) }, on = true, enabled = !busy && text != null)
+                        TextMMD(text = statusText, style = MaterialTheme.typography.labelSmall, maxLines = 2, modifier = Modifier.weight(1f))
+                    }
+                }
+                val sourceSide: @Composable (Modifier) -> Unit = { m ->
+                    Column(m) {
+                        if (!across) StoneTabs(labels, tabs.indexOf(shown), { pane = tabs[it] })
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            when (shown) {
+                                Pane.Source -> SourcePane(
+                                    text, { text = it }, textSize, focus,
+                                    symbols = when {
+                                        across && wide -> Symbols.TwoRows
+                                        wide -> Symbols.None
+                                        across -> Symbols.OneRow
+                                        else -> Symbols.TwoRows
+                                    },
+                                )
+                                Pane.Log -> LogPane(log, doc.name, ::jumpTo)
+                                Pane.Score -> ScorePane(pdf, pdfStamp, page, { page = it })
+                            }
+                        }
+                    }
+                }
+                if (wide) {
+                    Row(Modifier.fillMaxWidth().weight(1f)) {
+                        sourceSide(Modifier.weight(1f).fillMaxHeight())
+                        Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface))
+                        // Half and half when held across: the symbol keys need the source's width.
+                        Box(Modifier.weight(if (across) 1f else 1.3f).fillMaxHeight()) { ScorePane(pdf, pdfStamp, page, { page = it }) }
+                    }
+                } else {
+                    sourceSide(Modifier.fillMaxWidth().weight(1f))
+                }
+            }
+        }
+    }
+}
+
+private enum class Symbols { None, OneRow, TwoRows }
+
+/** The source: plain monospace text, no suggestions, no capitals; under it, on a phone, the symbol keys. */
+@Composable
+private fun SourcePane(
+    value: TextFieldValue?,
+    onValue: (TextFieldValue) -> Unit,
+    textSize: Int,
+    focus: FocusRequester,
+    symbols: Symbols,
+) {
+    if (value == null) return
+    Column(Modifier.fillMaxSize()) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValue,
+            textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = textSize.sp, color = Color.Black),
+            cursorBrush = SolidColor(Color.Black),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp).focusRequester(focus).textActions(),
+        )
+        // A full keyboard attached (the Manta's, or one on the Kompakt held across) has these
+        // keys already; the room goes to the source instead. The Kompakt alone reports
+        // "nokeys", so it keeps them.
+        val configuration = LocalConfiguration.current
+        val hardKeyboard = configuration.keyboard == Configuration.KEYBOARD_QWERTY &&
+            configuration.hardKeyboardHidden != Configuration.HARDKEYBOARDHIDDEN_YES
+        if (hardKeyboard) return@Column
+        if (symbols == Symbols.OneRow) {
+            // Held across, all fifteen fit on one row and leave the height for the text.
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                SYMBOLS.forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+            }
+        }
+        if (symbols == Symbols.TwoRows) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                SYMBOLS.take(8).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                SYMBOLS.drop(8).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SymbolKey(symbol: String, value: TextFieldValue, onValue: (TextFieldValue) -> Unit, modifier: Modifier) {
+    val said = stringResource(R.string.cd_insert, symbol)
+    Box(
+        modifier
+            .heightIn(min = 44.dp)
+            .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            .clickable {
+                val start = minOf(value.selection.start, value.selection.end)
+                val end = maxOf(value.selection.start, value.selection.end)
+                val t = value.text.replaceRange(start, end, symbol)
+                onValue(TextFieldValue(t, TextRange(start + symbol.length)))
+            }
+            .semantics { contentDescription = said },
+        contentAlignment = Alignment.Center,
+    ) {
+        TextMMD(text = symbol, style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold), textAlign = TextAlign.Center)
+    }
+}
+
+/** LilyPond's messages; a line that points into this score takes the reader there. */
+@Composable
+private fun LogPane(log: List<LogLine>, fileName: String, onJump: (LogLine) -> Unit) {
+    if (log.isEmpty()) {
+        TextMMD(text = stringResource(R.string.log_empty), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(20.dp))
+        return
+    }
+    PagedColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp), showCutRow = true) {
+        items(log.size) { i ->
+            val line = log[i]
+            val here = line.file != null && (line.file == fileName || line.file.endsWith("/$fileName"))
+            TextMMD(
+                text = line.text,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = if (line.kind == LogLine.Kind.Plain) FontWeight.Normal else FontWeight.Bold,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (here) Modifier.clickable { onJump(line) } else Modifier)
+                    .padding(vertical = if (here) 10.dp else 3.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The engraved score, pushed to black and white, drawn the full width of the pane. A page that is
+ * taller than the pane (an A4 page on the Kompakt) is read a screen at a time, each screen
+ * repeating the last strip of the one before, as PagedColumn reads a tall row; Next goes on to
+ * the next page after its last screen. Nothing scrolls.
+ */
+@Composable
+private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit) {
+    if (pdf == null) {
+        TextMMD(text = stringResource(R.string.no_score_yet), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(20.dp))
+        return
+    }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    // Which screen of the page; -1 means the last one (after turning back from the next page).
+    var screen by remember(pdf, stamp, page) { mutableIntStateOf(if (backwards) -1 else 0) }
+    val pages by produceState(0, pdf, stamp) { value = withContext(Dispatchers.IO) { pageCount(pdf) } }
+    val bitmap by produceState<android.graphics.Bitmap?>(null, pdf, stamp, page, size.width) {
+        value = if (size.width == 0) null else withContext(Dispatchers.IO) { renderPage(pdf, page, size.width) }
+    }
+    val bmp = bitmap
+    val screens = if (bmp == null || size.height == 0) 1 else screenStarts(bmp.height, size.height).size
+    val at = if (screen < 0) screens - 1 else screen.coerceIn(0, screens - 1)
+    val slice = remember(bmp, at, size) {
+        if (bmp == null || size.height == 0) null else {
+            val top = screenStarts(bmp.height, size.height)[at]
+            android.graphics.Bitmap.createBitmap(bmp, 0, top, bmp.width, minOf(size.height, bmp.height - top))
+        }
+    }
+    fun next() { if (at < screens - 1) screen = at + 1 else if (page < pages - 1) { backwards = false; onPage(page + 1) } }
+    fun previous() { if (at > 0) screen = at - 1 else if (page > 0) { backwards = true; onPage(page - 1) } }
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { size = it }) {
+            slice?.let {
+                Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.FillWidth, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize())
+            }
+        }
+        if (pages > 1 || screens > 1) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                HouseButton(stringResource(R.string.page_previous), ::previous, enabled = page > 0 || at > 0, compact = true)
+                TextMMD(
+                    text = stringResource(R.string.page_of, page + 1, pages.coerceAtLeast(1)),
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                )
+                HouseButton(stringResource(R.string.page_next), ::next, enabled = page < pages - 1 || at < screens - 1, compact = true)
+            }
+        }
+    }
+}
+
+/** Set when the page was turned back, so the new page opens on its last screen. */
+private var backwards = false
+
+/** Where each screen of a page [pageHeight] tall starts, in a pane [paneHeight] tall; screens overlap by an eighth. */
+internal fun screenStarts(pageHeight: Int, paneHeight: Int): List<Int> {
+    if (pageHeight <= paneHeight || paneHeight <= 0) return listOf(0)
+    val step = (paneHeight * 7 / 8).coerceAtLeast(1)
+    val out = mutableListOf<Int>()
+    var top = 0
+    while (top + paneHeight < pageHeight) { out += top; top += step }
+    out += pageHeight - paneHeight
+    return out
+}
+
+private const val TAG = "Josho"

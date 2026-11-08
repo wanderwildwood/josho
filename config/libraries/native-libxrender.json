@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libxrender",
+  "name": "libxrender 0.9.13 (native, in the bundled LilyPond)",
+  "description": "X Rendering Extension client library",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-libxrender"
+  ]
+}

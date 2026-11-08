@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:xorgproto",
+  "name": "xorgproto 2026.1 (native, in the bundled LilyPond)",
+  "description": "X.Org X11 Protocol headers",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-xorgproto"
+  ]
+}

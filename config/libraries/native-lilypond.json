@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:lilypond",
+  "name": "lilypond 2.26.0 (native, in the bundled LilyPond)",
+  "description": "A music engraving program",
+  "website": "https://lilypond.org/",
+  "licenses": [
+    "josho-native-lilypond"
+  ]
+}

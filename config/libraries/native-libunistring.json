@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libunistring",
+  "name": "libunistring 1.5 (native, in the bundled LilyPond)",
+  "description": "Library providing functions for manipulating Unicode strings",
+  "website": "https://www.gnu.org/software/libunistring/",
+  "licenses": [
+    "josho-native-libunistring"
+  ]
+}

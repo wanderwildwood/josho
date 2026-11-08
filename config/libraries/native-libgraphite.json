@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libgraphite",
+  "name": "libgraphite 1.3.15 (native, in the bundled LilyPond)",
+  "description": "Font system for multiple languages",
+  "website": "https://github.com/silnrsi/graphite",
+  "licenses": [
+    "josho-native-libgraphite"
+  ]
+}

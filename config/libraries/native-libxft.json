@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libxft",
+  "name": "libxft 2.3.9-1 (native, in the bundled LilyPond)",
+  "description": "FreeType-based font drawing library for X",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-libxft"
+  ]
+}

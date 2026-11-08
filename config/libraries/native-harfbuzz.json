@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:harfbuzz",
+  "name": "harfbuzz 15.1.0 (native, in the bundled LilyPond)",
+  "description": "OpenType text shaping engine",
+  "website": "https://www.freedesktop.org/wiki/Software/HarfBuzz/",
+  "licenses": [
+    "josho-native-harfbuzz"
+  ]
+}

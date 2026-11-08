@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libbz2",
+  "name": "libbz2 1.0.8-8 (native, in the bundled LilyPond)",
+  "description": "BZ2 format compression library",
+  "website": "http://www.bzip.org/",
+  "licenses": [
+    "josho-native-libbz2"
+  ]
+}

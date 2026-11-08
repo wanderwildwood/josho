@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libxext",
+  "name": "libxext 1.3.7 (native, in the bundled LilyPond)",
+  "description": "X11 miscellaneous extensions library",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-libxext"
+  ]
+}

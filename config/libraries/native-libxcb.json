@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libxcb",
+  "name": "libxcb 1.17.0-1 (native, in the bundled LilyPond)",
+  "description": "X11 client-side library",
+  "website": "https://xcb.freedesktop.org/",
+  "licenses": [
+    "josho-native-libxcb"
+  ]
+}

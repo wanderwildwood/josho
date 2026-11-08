@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libpng",
+  "name": "libpng 1.6.59 (native, in the bundled LilyPond)",
+  "description": "Official PNG reference library",
+  "website": "http://www.libpng.org/pub/png/libpng.html",
+  "licenses": [
+    "josho-native-libpng"
+  ]
+}

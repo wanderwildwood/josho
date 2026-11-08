@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:zlib",
+  "name": "zlib 1.4 (native, in the bundled LilyPond)",
+  "description": "Compression library implementing the deflate compression method found in gzip and PKZIP",
+  "website": "https://www.zlib.net/",
+  "licenses": [
+    "josho-native-zlib"
+  ]
+}

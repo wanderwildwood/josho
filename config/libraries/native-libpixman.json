@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libpixman",
+  "name": "libpixman 0.46.4-1 (native, in the bundled LilyPond)",
+  "description": "Low-level library for pixel manipulation",
+  "website": "https://pixman.org/",
+  "licenses": [
+    "josho-native-libpixman"
+  ]
+}

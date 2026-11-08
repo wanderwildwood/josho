@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libiconv",
+  "name": "libiconv 1.19.1 (native, in the bundled LilyPond)",
+  "description": "An implementation of iconv()",
+  "website": "https://www.gnu.org/software/libiconv/",
+  "licenses": [
+    "josho-native-libiconv"
+  ]
+}

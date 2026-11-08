@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engraver: launcher icon, a pen nib on the staff, in the Mudita Kompakt stock style (81 grid,
+     ring r=19.25 x 2.5, glyph stroke 2.5, black on transparent). Chosen 2026-11-08 ("A");
+     built by ~/Desktop/icons/engraver/make.py. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="81dp"
+    android:height="81dp"
+    android:viewportWidth="81"
+    android:viewportHeight="81">
+    <path
+        android:pathData="M19.25,2.5C9.999,2.5 2.5,9.999 2.5,19.25V61.75C2.5,71.001 9.999,78.5 19.25,78.5H61.75C71.001,78.5 78.5,71.001 78.5,61.75V19.25C78.5,9.999 71.001,2.5 61.75,2.5H19.25ZM0,19.25C0,8.619 8.619,0 19.25,0H61.75C72.382,0 81,8.619 81,19.25V61.75C81,72.382 72.382,81 61.75,81H19.25C8.619,81 0,72.382 0,61.75V19.25Z"
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"/>
+    <path android:pathData="M20.50,31.00 52.00,31.00" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M20.50,37.50 52.00,37.50" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M20.50,44.00 52.00,44.00" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M20.50,50.50 52.00,50.50" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M20.50,57.00 52.00,57.00" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M31.35,45.69 31.53,46.37 31.47,47.12 31.18,47.87 30.66,48.59 29.97,49.21 29.14,49.70 28.23,50.02 27.31,50.15 26.44,50.09 25.67,49.83 25.06,49.39 24.65,48.81 24.47,48.13 24.53,47.38 24.82,46.63 25.34,45.91 26.03,45.29 26.86,44.80 27.77,44.48 28.69,44.35 29.56,44.41 30.33,44.67 30.94,45.11 31.35,45.69Z" android:fillColor="#FF000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M31.20,46.45 31.20,31.75" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M53.15,18.24 52.81,18.41 52.32,18.62 51.75,18.89 51.13,19.24 50.51,19.69 49.94,20.27 49.39,20.96 48.83,21.75 48.27,22.65 47.71,23.66 47.16,24.77 46.63,26.01 46.12,27.43 45.61,29.05 45.12,30.77 44.63,32.54 44.15,34.25 43.68,35.84 43.19,37.39 42.67,38.99 42.16,40.53 41.69,41.95 41.29,43.13 41.81,43.56 42.90,42.97 44.21,42.26 45.65,41.49 47.13,40.70 48.57,39.94 50.05,39.20 51.66,38.43 53.31,37.65 54.93,36.86 56.43,36.09 57.74,35.33 58.86,34.59 59.87,33.86 60.76,33.14 61.55,32.43 62.23,31.74 62.82,31.08 63.29,30.41 63.62,29.72 63.86,29.05 64.02,28.44 64.15,27.93 64.26,27.56Z" android:fillColor="#FFFFFFFF" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M42.40,42.33 48.92,34.56" android:fillColor="#00000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M52.66,32.58 51.98,33.06 51.16,33.13 50.41,32.78 49.94,32.10 49.87,31.28 50.22,30.53 50.89,30.06 51.72,29.99 52.46,30.34 52.94,31.01 53.01,31.84 52.66,32.58Z" android:fillColor="#FF000000" android:strokeColor="#FF000000" android:strokeWidth="2.5" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+</vector>

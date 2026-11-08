@@ -1,0 +1,17 @@
+--- a/packages/lilypond/build.sh	2026-11-07 22:29:36.561825697 -0500
++++ b/packages/lilypond/build.sh	2026-11-07 22:29:36.563825719 -0500
+@@ -7,12 +7,12 @@
+ TERMUX_PKG_SRCURL="https://lilypond.org/download/sources/v${TERMUX_PKG_VERSION%.*}/lilypond-${TERMUX_PKG_VERSION}.tar.gz"
+ TERMUX_PKG_SHA256=bbe82dbeba7f7f99ddcd8d1fa134a0d89cafa6e8f815fde5bb01f4208b06fe05
+ TERMUX_PKG_AUTO_UPDATE=true
+-TERMUX_PKG_DEPENDS="fontconfig, freetype, ghostscript, glib, guile, harfbuzz, libc++, pango, python, tex-gyre"
++TERMUX_PKG_DEPENDS="fontconfig, freetype, glib, guile, harfbuzz, libc++, pango, tex-gyre"
+ TERMUX_PKG_BUILD_DEPENDS="flex"
+ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+ --disable-documentation
+ GUILE_FLAVOR=guile-3.0
+-PYTHON=python${TERMUX_PYTHON_VERSION}
++PYTHON=python3
+ "
+ 
+ termux_step_post_make_install() {

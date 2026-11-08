@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libx11",
+  "name": "libx11 1.8.14 (native, in the bundled LilyPond)",
+  "description": "X11 client-side library",
+  "website": "https://xorg.freedesktop.org/",
+  "licenses": [
+    "josho-native-libx11"
+  ]
+}

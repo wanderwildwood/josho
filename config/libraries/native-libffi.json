@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libffi",
+  "name": "libffi 3.8.0 (native, in the bundled LilyPond)",
+  "description": "Library providing a portable, high level programming interface to various calling conventions",
+  "website": "https://sourceware.org/libffi/",
+  "licenses": [
+    "josho-native-libffi"
+  ]
+}

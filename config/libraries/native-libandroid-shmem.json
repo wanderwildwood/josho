@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libandroid-shmem",
+  "name": "libandroid-shmem 0.7 (native, in the bundled LilyPond)",
+  "description": "System V shared memory emulation on Android using ashmem",
+  "website": "https://github.com/termux/libandroid-shmem",
+  "licenses": [
+    "josho-native-libandroid-shmem"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libc++",
+  "name": "libc++ 30 (native, in the bundled LilyPond)",
+  "description": "C++ Standard Library",
+  "website": "https://libcxx.llvm.org/",
+  "licenses": [
+    "josho-native-libc++"
+  ]
+}

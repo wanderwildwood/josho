@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:pcre2",
+  "name": "pcre2 10.49 (native, in the bundled LilyPond)",
+  "description": "Perl 5 compatible regular expression library",
+  "website": "https://pcre2project.github.io/pcre2/",
+  "licenses": [
+    "josho-native-pcre2"
+  ]
+}

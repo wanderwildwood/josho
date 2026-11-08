@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Engraver</string>
+
+    <!-- Files -->
+    <string name="files_none">Choose the folder your LilyPond files are in. Scores (.ly) are listed here; files they \\include can sit beside them or in folders under it.</string>
+    <string name="files_choose">Choose a folder</string>
+    <string name="files_empty">No .ly files in this folder yet.</string>
+    <string name="files_new">New score</string>
+    <string name="files_new_name">score.ly</string>
+    <string name="files_reading">Reading the folder…</string>
+    <string name="files_lost">The folder can no longer be opened. Choose it again.</string>
+
+    <!-- Editor -->
+    <string name="tab_source">Source</string>
+    <string name="tab_score">Score</string>
+    <string name="tab_log">Log</string>
+    <string name="compile">Compile</string>
+    <string name="compiling">Compiling…</string>
+    <string name="setting_up">Setting up LilyPond, the first time only…</string>
+    <string name="compiled_in">Compiled in %1$s s</string>
+    <string name="compiled_with_warnings">Compiled in %1$s s, with warnings. See Log.</string>
+    <string name="compile_failed">LilyPond stopped with errors. See Log.</string>
+    <string name="compile_could_not_start">LilyPond could not start: %1$s</string>
+    <string name="saved_pdf">%1$s saved beside the score.</string>
+    <string name="no_score_yet">Press Compile to engrave the score.</string>
+    <string name="log_empty">Nothing yet. LilyPond\'s messages appear here after a compile.</string>
+    <string name="page_of">Page %1$d of %2$d</string>
+    <string name="page_previous">Previous</string>
+    <string name="page_next">Next</string>
+    <string name="cd_insert">Insert %1$s</string>
+    <string name="unsaved">Not saved</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_folder">Folder</string>
+    <string name="settings_folder_none">None chosen</string>
+    <!-- Which way the screen is held -->
+    <string name="settings_turn">Which way round</string>
+    <!-- Portrait -->
+    <string name="settings_turn_upright">Upright</string>
+    <!-- Landscape -->
+    <string name="settings_turn_across">Across</string>
+    <!-- Landscape, upside down -->
+    <string name="settings_turn_around">Across, turned around</string>
+    <!-- Follows the phone's rotation, read from its motion sensor -->
+    <string name="settings_turn_device">Turns with the phone</string>
+    <string name="settings_text_size">Editor text size</string>
+    <string name="settings_text_size_small">Tiny</string>
+    <string name="settings_text_size_medium">Small</string>
+    <string name="settings_text_size_house">Usual</string>
+    <string name="settings_text_size_large">Large</string>
+    <string name="settings_text_size_note">Tiny fits more of a long score on the screen.</string>
+
+    <string name="cd_back">Back</string>
+    <string name="cd_about">About</string>
+    <string name="cd_settings">Settings</string>
+
+    <!-- About -->
+    <string name="about_title">Engraver %1$s</string>
+    <string name="about_what">Write music in LilyPond and engrave it here, with no server: LilyPond itself runs on the device. The PDF is saved beside the score.</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy">Everything stays on this device. The app has no internet access, so nothing is sent anywhere, and nothing is collected about you. It reads and writes only the folder you choose, and keeps a working copy of its LilyPond files inside the app while it compiles. There are no ads, no analytics and no tracking. Pressing the donation or website line opens your browser.</string>
+    <string name="about_terms_title">Terms</string>
+    <string name="about_terms">This app is free software under the GNU General Public License v3. It comes with no warranty: use it at your own risk.</string>
+    <string name="about_feed_the_llamas">Feed the llamas</string>
+    <string name="about_no_browser_address">No browser is installed. The address is %1$s.</string>
+    <string name="about_close">Close</string>
+    <string name="licences_title">Licenses</string>
+    <string name="licences_source_head">Source code</string>
+    <string name="licences_no_text">%s needs no license text here.</string>
+    <string name="licences_licence">Engraver is free software under the GNU General Public License, version 3 only. Copyright wander wildwood. It carries GNU LilyPond, Guile and the libraries they use, each under its own license, listed below.</string>
+    <string name="licences_back">Back</string>
+    <string name="licences_full_head">Full texts</string>
+    <string name="licences_full_gpl">GNU General Public License v3 (full text)</string>
+    <string name="licences_full_apache">Apache License 2.0 (full text)</string>
+    <string name="licences_full_ofl">SIL Open Font License 1.1 (full text)</string>
+    <string name="about_write_to">Write to %1$s</string>
+    <string name="about_no_mail_app">No email app is installed. The address is %1$s.</string>
+    <string name="about_open_drawer">Open %1$s</string>
+    <string name="about_close_drawer">Close %1$s</string>
+    <string name="about_intro_head">What it does</string>
+    <string name="about_contact_head">Contact</string>
+    <string name="about_links_head">Links</string>
+    <string name="privacy_who_title">Who we are</string>
+    <string name="privacy_who">This app is made by wander wildwood, an independent developer: one person, not a company. That makes wander wildwood the data controller for anything the app itself handles, and that is very little: what you put in stays on this device unless you send it somewhere yourself, and nothing comes to the developer.</string>
+    <string name="privacy_contact_title">How to contact us</string>
+    <string name="privacy_contact">Write to email@wanderthe.dev, about your data or anything else.</string>
+    <string name="privacy_rights_title">Your rights</string>
+    <string name="privacy_rights">Under the GDPR you can ask to see the data held about you, to have it corrected or deleted, to limit or object to its use, to take a copy with you, to withdraw consent, and to complain to a data protection authority. Since the app keeps nothing but the files in the folder you chose and a working copy inside the app, you can do most of this yourself: clear the app\'s data in Android\'s settings, or uninstall the app.</string>
+</resources>

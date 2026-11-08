@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libgc",
+  "name": "libgc 8.2.12 (native, in the bundled LilyPond)",
+  "description": "Library providing the Boehm-Demers-Weiser conservative garbage collector",
+  "website": "https://www.hboehm.info/gc/",
+  "licenses": [
+    "josho-native-libgc"
+  ]
+}

@@ -1,0 +1,59 @@
+package com.wanderwildwood.josho.engine
+
+import android.content.Context
+import java.io.File
+
+/** A file in a [Folder]: [id] is how the folder finds it again, [path] is relative to the folder. */
+data class Doc(val id: String, val path: String, val name: String, val parent: String, val size: Long)
+
+/** Where scores live: the reader's chosen folder ([Workspace]) or the app's own ([LocalFolder]). */
+interface Folder {
+    fun title(): String
+    fun scores(): List<Doc>
+    fun read(doc: Doc): String
+    fun write(doc: Doc, text: String)
+    fun create(name: String, text: String): Doc?
+    /** The folder's LilyPond files as real files for LilyPond, and where [score] is among them. */
+    fun mirror(score: Doc): File
+    /** Writes [file] beside [score], replacing a file of the same name. */
+    fun putBeside(score: Doc, file: File, mime: String)
+}
+
+/** What LilyPond may \include: scores, include files, Scheme, plain text; nothing large. */
+val SOURCE_TYPES = setOf("ly", "ily", "lyi", "scm", "txt")
+private const val MAX_SOURCE = 2L * 1024 * 1024
+
+fun isSource(doc: Doc): Boolean =
+    doc.name.substringAfterLast('.', "").lowercase() in SOURCE_TYPES && doc.size <= MAX_SOURCE
+
+/**
+ * A folder inside the app (files/scratch), for trying Engraver before choosing a folder of one's
+ * own: it holds the sample. LilyPond compiles in place here, so nothing needs copying.
+ */
+class LocalFolder(context: Context) : Folder {
+    private val dir = File(context.filesDir, "scratch").apply { mkdirs() }
+
+    override fun title(): String = "Sample"
+
+    override fun scores(): List<Doc> = dir.listFiles().orEmpty()
+        .filter { it.isFile && it.name.endsWith(".ly") }
+        .sortedBy { it.name.lowercase() }
+        .map { Doc(it.path, it.name, it.name, dir.path, it.length()) }
+
+    override fun read(doc: Doc): String = File(doc.id).readText()
+
+    override fun write(doc: Doc, text: String) = File(doc.id).writeText(text)
+
+    override fun create(name: String, text: String): Doc? {
+        val f = File(dir, name)
+        f.writeText(text)
+        return Doc(f.path, f.name, f.name, dir.path, f.length())
+    }
+
+    override fun mirror(score: Doc): File = File(score.id)
+
+    override fun putBeside(score: Doc, file: File, mime: String) {
+        val target = File(File(score.id).parentFile, file.name)
+        if (target.canonicalPath != file.canonicalPath) file.copyTo(target, overwrite = true)
+    }
+}

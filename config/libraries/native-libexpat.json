@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libexpat",
+  "name": "libexpat 2.10.0 (native, in the bundled LilyPond)",
+  "description": "XML parsing C library",
+  "website": "https://libexpat.github.io/",
+  "licenses": [
+    "josho-native-libexpat"
+  ]
+}

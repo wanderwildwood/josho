@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- No permissions: LilyPond is inside the app, and the folder is the one the reader picks
+         with the system picker, which grants access to that folder only. -->
+
+    <!-- The About's links open in a browser, and its contact row in an email app. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <!-- The apps that act on selected text, such as Define, so the menu over a selection in
+             the editor can offer them beside Copy. -->
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <!-- Cabinet, which draws its own folder chooser; without it the phone's stock one is used. -->
+        <package android:name="com.wanderwildwood.tana" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/no_backup"
+        android:fullBackupContent="false"
+        android:icon="@drawable/ic_launcher_mudita"
+        android:roundIcon="@drawable/ic_launcher_mudita"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.App">
+
+        <!-- No fixed orientation: the Supernotes turn, and the layout follows (side by side when
+             600 dp across). The Kompakt never turns by itself, so it stays portrait. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

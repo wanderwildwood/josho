@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:brotli",
+  "name": "brotli 1.2.1 (native, in the bundled LilyPond)",
+  "description": "lossless compression algorithm and format (command line utility)",
+  "website": "https://github.com/google/brotli",
+  "licenses": [
+    "josho-native-brotli"
+  ]
+}

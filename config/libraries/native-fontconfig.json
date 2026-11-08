@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:fontconfig",
+  "name": "fontconfig 2.18.3 (native, in the bundled LilyPond)",
+  "description": "Library for configuring and customizing font access",
+  "website": "https://www.freedesktop.org/wiki/Software/fontconfig/",
+  "licenses": [
+    "josho-native-fontconfig"
+  ]
+}

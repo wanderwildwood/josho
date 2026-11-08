@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libandroid-support",
+  "name": "libandroid-support 29-1 (native, in the bundled LilyPond)",
+  "description": "Library extending the Android C library (Bionic) for additional multibyte, locale and math support",
+  "website": "https://github.com/termux/libandroid-support",
+  "licenses": [
+    "josho-native-libandroid-support"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libgmp",
+  "name": "libgmp 6.3.0-2 (native, in the bundled LilyPond)",
+  "description": "Library for arbitrary precision arithmetic",
+  "website": "https://gmplib.org/",
+  "licenses": [
+    "josho-native-libgmp"
+  ]
+}

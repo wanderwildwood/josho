@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:pango",
+  "name": "pango 1.58.2 (native, in the bundled LilyPond)",
+  "description": "Library for laying out and rendering text",
+  "website": "https://www.gtk.org/docs/architecture/pango",
+  "licenses": [
+    "josho-native-pango"
+  ]
+}

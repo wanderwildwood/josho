@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:liblzo",
+  "name": "liblzo 2.10-5 (native, in the bundled LilyPond)",
+  "description": "Portable lossless data compression library",
+  "website": "http://www.oberhumer.com/opensource/lzo",
+  "licenses": [
+    "josho-native-liblzo"
+  ]
+}

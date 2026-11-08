@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:readline",
+  "name": "readline 8.3.6 (native, in the bundled LilyPond)",
+  "description": "Library that allow users to edit command lines as they are typed in",
+  "website": "https://tiswww.case.edu/php/chet/readline/rltop.html",
+  "licenses": [
+    "josho-native-readline"
+  ]
+}

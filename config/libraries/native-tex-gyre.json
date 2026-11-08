@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:tex-gyre",
+  "name": "tex-gyre 2.501-2 (native, in the bundled LilyPond)",
+  "description": "The TeX Gyre (TG) Collection of Fonts",
+  "website": "https://www.gust.org.pl/projects/e-foundry/tex-gyre/",
+  "licenses": [
+    "josho-native-tex-gyre"
+  ]
+}

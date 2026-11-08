@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:libcairo",
+  "name": "libcairo 1.18.6 (native, in the bundled LilyPond)",
+  "description": "Cairo 2D vector graphics library",
+  "website": "https://cairographics.org",
+  "licenses": [
+    "josho-native-libcairo"
+  ]
+}

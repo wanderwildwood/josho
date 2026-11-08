@@ -1,0 +1,9 @@
+{
+  "uniqueId": "native:guile",
+  "name": "guile 3.0.11-1 (native, in the bundled LilyPond)",
+  "description": "Portable, embeddable Scheme implementation written in C",
+  "website": "http://www.gnu.org/software/guile/",
+  "licenses": [
+    "josho-native-guile"
+  ]
+}
