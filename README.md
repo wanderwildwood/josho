@@ -1,13 +1,49 @@
-# Engraver
+# 浄書 jōsho — Engraver
 
 Type LilyPond, get an engraved score on the screen and a PDF beside the file. Runs LilyPond
 2.26 itself, on the device, with no server and no internet permission. Made for the Mudita
-Kompakt; held sideways, the source and the score sit side by side.
+Kompakt, and it will install on any Android 11 device; held sideways, the source and the score
+sit side by side.
+
+| | |
+|---|---|
+| ![A folder of scores](screenshots/1-files.png) | ![The LilyPond source](screenshots/2-source.png) |
+| ![The engraved score](screenshots/3-score.png) | ![Settings](screenshots/4-settings.png) |
 
 Pick a folder of `.ly` files (Cabinet's chooser when Cabinet is installed); `\include`s in that
 folder are followed. A score that sets no paper size is engraved on A6, which fits the screen;
 one with its own `\paper` size keeps it. See `SOURCES.md` for where every bundled binary comes
 from and `build/` for how they are built.
+
+## What it does not do
+
+No permissions: nothing is asked of you, and there is no `INTERNET` permission, so it cannot
+open a network connection even by accident. The folder of scores is reached through the folder
+you pick and nothing else. `PRIVACY.md` has the evidence.
+
+## Building
+
+```
+./gradlew assembleArm64Debug
+```
+
+The bundled LilyPond is built separately first; `build/README.md` says how. A release build
+needs a keystore at `signing/signing.keystore` with a matching `signing/signing.properties`.
+There is no fallback key in this repository: without one, a release build comes out unsigned
+rather than wrongly signed.
+
+## Getting it, and keeping it
+
+Download <https://github.com/wanderwildwood/josho/releases/latest/download/josho.apk>
+and sideload it. That address always points at the newest release, and every release
+publishes a `.sha256` beside the APK if you would rather check than trust.
+
+For updates without doing this by hand, add this repository to
+[Obtainium](https://github.com/ImranR98/Obtainium):
+
+    https://github.com/wanderwildwood/josho
+
+## Thanks
 
 Thanks to [zyny](https://forum.mudita.com/u/zyny) on the Mudita forum, whose request started
 this app.
