@@ -1,4 +1,4 @@
-\version "2.24.0"
+\version "2.26.0"
 \header { title = "Bass model: up 2, down 3" tagline = ##f }
 \paper { #(set-paper-size "a6") }
 upper = \relative c'' { \clef treble \time 2/2 e2 f d e c d b c a b c1 \bar "|." }

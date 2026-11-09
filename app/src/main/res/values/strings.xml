@@ -51,6 +51,13 @@
     <string name="settings_text_size_house">Usual</string>
     <string name="settings_text_size_large">Large</string>
     <string name="settings_text_size_note">Tiny fits more of a long score on the screen.</string>
+    <string name="settings_fold_bars">Bars while typing</string>
+    <string name="settings_fold_bars_fold">Fold away</string>
+    <string name="settings_fold_bars_stay">Stay</string>
+    <string name="settings_fold_bars_note">While the keyboard is up, the title and the Compile row make room for the source. They come back when the keyboard goes down.</string>
+    <!-- Side by side: shows or folds away the engraved score -->
+    <string name="score_button">Score</string>
+    <string name="cd_more_symbols">More symbols</string>
 
     <string name="cd_back">Back</string>
     <string name="cd_about">About</string>

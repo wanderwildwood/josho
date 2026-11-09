@@ -34,6 +34,11 @@ class Prefs(context: Context) {
         get() = runCatching { Turn.valueOf(p.getString("turn", null) ?: "") }.getOrDefault(Turn.UPRIGHT)
         set(v) = p.edit().putString("turn", v.name).apply()
 
+    /** The title bar and the Compile row fold away while the on-screen keyboard is up. */
+    var foldBars: Boolean
+        get() = p.getBoolean("foldBars", true)
+        set(v) = p.edit().putBoolean("foldBars", v).apply()
+
     /** The score last open, by its path in the folder, so the app opens where it was left. */
     var lastScore: String?
         get() = p.getString("lastScore", null)

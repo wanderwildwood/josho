@@ -22,6 +22,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.Spacer
+import android.view.ViewTreeObserver
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -84,6 +90,9 @@ private val SYMBOLS = listOf("\\", "{", "}", "<", ">", "'", ",", "~", "(", ")", 
  * A score open: its source, the engraved pages, LilyPond's messages. Held across, or on a wide
  * screen (the Supernotes, anything 600 dp across), source and score sit side by side, with the
  * log under the source's tab; a Kompakt held upright shows one pane at a time, by the tabs.
+ * Side by side, the Score button folds the score away so the source has the whole width, and a
+ * compile brings it back. With [foldBars], the title bar and the Compile row fold away while the
+ * on-screen keyboard is up, and come back when it goes down.
  */
 @Composable
 fun EditorScreen(
@@ -92,6 +101,7 @@ fun EditorScreen(
     lily: LilyPond,
     textSize: Int,
     autoCompile: Boolean,
+    foldBars: Boolean = true,
     autoCompileScheme: Boolean = false,
     /** Debug only: "side" or "tabs" forces a layout, for comparing them in screenshots. */
     layout: String? = null,
@@ -109,7 +119,11 @@ fun EditorScreen(
     var pdf by remember(doc.id) { mutableStateOf<File?>(null) }
     var pdfStamp by remember(doc.id) { mutableStateOf(0L) }
     var page by remember(doc.id) { mutableIntStateOf(0) }
+    var scoreShown by remember(doc.id) { mutableStateOf(true) }
     val focus = remember { FocusRequester() }
+    // The on-screen keyboard up: the reader is typing, and the bars give the source their room.
+    val keyboardUp = rememberKeyboardUp()
+    val folded = foldBars && keyboardUp
 
     // The kept LilyPond starts while the score is being read, so the first compile is quick too.
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { lily.warmUp() } }
@@ -161,7 +175,7 @@ fun EditorScreen(
                     warned -> context.getString(R.string.compiled_with_warnings, seconds)
                     else -> context.getString(R.string.compiled_in, seconds)
                 }
-                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0 }
+                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0; scoreShown = true }
                 pane = when {
                     r.exit != 0 || r.pdf == null -> Pane.Log
                     wide -> Pane.Source
@@ -181,7 +195,7 @@ fun EditorScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { Bar(doc.name, { save(); onBack() }, null, onAbout) },
+        topBar = { if (!folded) Bar(doc.name, { save(); onBack() }, null, onAbout) },
     ) { padding ->
         BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
             // Held across (a Kompakt across is 533 x 320 dp) or 600 dp wide (the Supernotes):
@@ -206,14 +220,20 @@ fun EditorScreen(
             }
             val shown = if (wide && pane == Pane.Score) Pane.Source else pane
             val statusText = status.ifEmpty { if ((text?.text ?: savedText) != savedText) stringResource(R.string.unsaved) else "" }
+            val scoreButton: @Composable () -> Unit = {
+                if (wide) HouseButton(stringResource(R.string.score_button), { scoreShown = !scoreShown }, on = scoreShown, compact = true)
+            }
             Column(keys.fillMaxSize()) {
-                if (across) {
+                if (folded) {
+                    // Typing: no bars. They come back when the keyboard goes down.
+                } else if (across) {
                     Row(
-                        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 4.dp),
+                        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         HouseButton(stringResource(R.string.compile), { compile(wide) }, on = true, enabled = !busy && text != null, compact = true)
+                        scoreButton()
                         StoneTabs(labels, tabs.indexOf(shown), { pane = tabs[it] }, Modifier.weight(1.4f), rule = false)
                         TextMMD(text = statusText, style = MaterialTheme.typography.labelSmall, maxLines = 2, modifier = Modifier.weight(1f))
                     }
@@ -225,18 +245,23 @@ fun EditorScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         HouseButton(stringResource(R.string.compile), { compile(wide) }, on = true, enabled = !busy && text != null)
+                        scoreButton()
                         TextMMD(text = statusText, style = MaterialTheme.typography.labelSmall, maxLines = 2, modifier = Modifier.weight(1f))
                     }
                 }
                 val sourceSide: @Composable (Modifier) -> Unit = { m ->
                     Column(m) {
-                        if (!across) StoneTabs(labels, tabs.indexOf(shown), { pane = tabs[it] })
+                        if (!across && !folded) StoneTabs(labels, tabs.indexOf(shown), { pane = tabs[it] })
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (shown) {
                                 Pane.Source -> SourcePane(
                                     text, { text = it }, textSize, focus,
                                     symbols = when {
-                                        across && wide -> Symbols.TwoRows
+                                        // Held across beside the score: one row of eight, and
+                                        // the rest a press away; with the score folded away
+                                        // the source has the width for all fifteen.
+                                        across && wide && scoreShown -> Symbols.OneRowPaged
+                                        across && wide -> Symbols.OneRow
                                         wide -> Symbols.None
                                         across -> Symbols.OneRow
                                         else -> Symbols.TwoRows
@@ -248,7 +273,7 @@ fun EditorScreen(
                         }
                     }
                 }
-                if (wide) {
+                if (wide && scoreShown) {
                     Row(Modifier.fillMaxWidth().weight(1f)) {
                         sourceSide(Modifier.weight(1f).fillMaxHeight())
                         Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface))
@@ -263,7 +288,7 @@ fun EditorScreen(
     }
 }
 
-private enum class Symbols { None, OneRow, TwoRows }
+private enum class Symbols { None, OneRow, OneRowPaged, TwoRows }
 
 /** The source: plain monospace text, no suggestions, no capitals; under it, on a phone, the symbol keys. */
 @Composable
@@ -291,6 +316,23 @@ private fun SourcePane(
         val hardKeyboard = configuration.keyboard == Configuration.KEYBOARD_QWERTY &&
             configuration.hardKeyboardHidden != Configuration.HARDKEYBOARDHIDDEN_YES
         if (hardKeyboard) return@Column
+        if (symbols == Symbols.OneRowPaged) {
+            // Eight keys and a "more" key that turns to the other seven and back.
+            var second by remember { mutableStateOf(false) }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                (if (second) SYMBOLS.drop(8) else SYMBOLS.take(8)).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+                val more = stringResource(R.string.cd_more_symbols)
+                Box(
+                    Modifier.weight(1f).heightIn(min = 44.dp).border(1.dp, MaterialTheme.colorScheme.onSurface)
+                        .clickable { second = !second }.semantics { contentDescription = more },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextMMD(text = "⋯", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                }
+                // The second page has seven: an empty place keeps the keys the same width.
+                if (second) Spacer(Modifier.weight(1f))
+            }
+        }
         if (symbols == Symbols.OneRow) {
             // Held across, all fifteen fit on one row and leave the height for the text.
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -424,3 +466,22 @@ internal fun screenStarts(pageHeight: Int, paneHeight: Int): List<Int> {
 }
 
 private const val TAG = "Josho"
+
+/**
+ * Whether the on-screen keyboard is showing, asked of the window itself after every layout. The
+ * app is not drawn edge to edge (the window is resized for the keyboard instead), and then
+ * Compose's own keyboard inset stays at zero; the window's insets still say.
+ */
+@Composable
+private fun rememberKeyboardUp(): Boolean {
+    val view = LocalView.current
+    var up by remember { mutableStateOf(false) }
+    DisposableEffect(view) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
+            up = ViewCompat.getRootWindowInsets(view)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        }
+        view.viewTreeObserver.addOnGlobalLayoutListener(listener)
+        onDispose { view.viewTreeObserver.removeOnGlobalLayoutListener(listener) }
+    }
+    return up
+}

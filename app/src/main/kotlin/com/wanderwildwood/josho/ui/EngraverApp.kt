@@ -64,11 +64,14 @@ fun EngraverApp(
     var about by remember { mutableStateOf(false) }
     var textSize by remember { mutableIntStateOf(prefs.textSize) }
     var turn by remember { mutableStateOf(prefs.turn) }
+    var foldBars by remember { mutableStateOf(prefs.foldBars) }
     var scores by remember { mutableStateOf<List<Doc>?>(null) }
     var lost by remember { mutableStateOf(false) }
     var open by remember { mutableStateOf<Doc?>(null) }
     var reload by remember { mutableIntStateOf(0) }
     val sample = remember { context.assets.open("sample.ly").bufferedReader().readText() }
+    // A new score starts from the least LilyPond needs: a header, one note, layout and MIDI.
+    val blank = remember { context.assets.open("new.ly").bufferedReader().readText() }
 
     LaunchedEffect(folder, reload) {
         scores = null
@@ -112,7 +115,7 @@ fun EngraverApp(
             onOpen = { doc -> open = doc; prefs.lastScore = doc.path; screen = Screen.Editor },
             onNew = {
                 scope.launch {
-                    val doc = withContext(Dispatchers.IO) { runCatching { folder.create(context.getString(R.string.files_new_name), sample) }.getOrNull() }
+                    val doc = withContext(Dispatchers.IO) { runCatching { folder.create(context.getString(R.string.files_new_name), blank) }.getOrNull() }
                     reload++
                     if (doc != null) { open = doc; prefs.lastScore = doc.path; screen = Screen.Editor }
                 }
@@ -130,6 +133,7 @@ fun EngraverApp(
                     lily = lily,
                     textSize = Prefs.TEXT_SIZES[textSize],
                     autoCompile = autoCompile,
+                    foldBars = foldBars,
                     autoCompileScheme = autoCompileScheme,
                     layout = layout,
                     onBack = { screen = Screen.Files; reload++ },
@@ -145,6 +149,8 @@ fun EngraverApp(
                 onTextSize = { textSize = it; prefs.textSize = it },
                 turn = turn,
                 onTurn = { turn = it; prefs.turn = it; onTurn(it) },
+                foldBars = foldBars,
+                onFoldBars = { foldBars = it; prefs.foldBars = it },
                 onChooseFolder = { pick.launch(null) },
                 onBack = { screen = Screen.Files },
                 onAbout = { about = true },

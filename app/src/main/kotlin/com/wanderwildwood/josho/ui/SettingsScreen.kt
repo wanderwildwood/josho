@@ -18,7 +18,7 @@ import com.mudita.mmd.components.text.TextMMD
 import com.wanderwildwood.josho.R
 import com.wanderwildwood.josho.Turn
 
-/** Two settings: the folder, and how large the editor's text is. No separator lines (house rule). */
+/** The settings: the folder, which way round, how large the editor's text is, and the bars while typing. No separator lines (house rule). */
 @Composable
 fun SettingsScreen(
     folderName: String?,
@@ -26,6 +26,8 @@ fun SettingsScreen(
     onTextSize: (Int) -> Unit,
     turn: Turn,
     onTurn: (Turn) -> Unit,
+    foldBars: Boolean,
+    onFoldBars: (Boolean) -> Unit,
     onChooseFolder: () -> Unit,
     onBack: () -> Unit,
     onAbout: () -> Unit,
@@ -76,6 +78,18 @@ fun SettingsScreen(
                         compact = true,
                     )
                     TextMMD(text = stringResource(R.string.settings_text_size_note), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            item {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextMMD(text = stringResource(R.string.settings_fold_bars), style = MaterialTheme.typography.bodyLarge)
+                    HouseChoiceRow(
+                        options = listOf(stringResource(R.string.settings_fold_bars_fold), stringResource(R.string.settings_fold_bars_stay)),
+                        selected = if (foldBars) 0 else 1,
+                        onSelect = { onFoldBars(it == 0) },
+                        compact = true,
+                    )
+                    TextMMD(text = stringResource(R.string.settings_fold_bars_note), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
