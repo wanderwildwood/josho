@@ -84,21 +84,15 @@ class LilyPond(private val context: Context) {
     private var server: Process? = null
 
     /**
-     * The paper a score is engraved on when it does not name its own: a settings file LilyPond
-     * reads before each score (its include-settings option) sets the default, and a \paper
-     * block in the score still wins. (The paper-size option itself left the kept LilyPond's
-     * paper without its sizes, and fails a one-shot run too: "Wrong type (expecting real number)".) A change
-     * ends the kept LilyPond, since it was started with the old file.
+     * Scores that name no paper are engraved on A6, which fits a phone's screen (the score pane
+     * draws a page its full width, so on a larger screen it is only larger); a \paper block in
+     * the score still wins, so a file written for printing keeps its size. It reaches LilyPond
+     * as a settings file read before each score (the include-settings option); the paper-size
+     * option itself failed here: "Wrong type (expecting real number)".
      */
-    @set:Synchronized
-    var paperSize: String = "a6"
-        set(v) {
-            if (v != field) { field = v; stop() }
-        }
-
     private fun options(): List<String> {
         val settings = File(context.filesDir, "paper.ly")
-        val line = "#(set-default-paper-size \"$paperSize\")\n"
+        val line = "#(set-default-paper-size \"$PAPER\")\n"
         if (!settings.isFile || settings.readText() != line) settings.writeText(line)
         // The path bare: LilyPond takes this option's value as the file name as it stands, and a
         // quoted one is a name with quotes in it (tried on the emulator 2026-11-09). The app's own
@@ -213,6 +207,8 @@ class LilyPond(private val context: Context) {
     companion object {
         /** Starts the line the kept LilyPond writes after each score, then 0 (done) or 1 (failed). */
         private const val DONE = "\u001fjosho-done "
+        /** The paper for scores that name none. */
+        private const val PAPER = "a6"
         /** Scores per kept LilyPond before a fresh one. */
         private const val SERVER_RUNS = 25
         private const val SERVER_LIMIT_MS = 120_000L

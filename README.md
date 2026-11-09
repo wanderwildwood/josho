@@ -5,8 +5,9 @@ Type LilyPond, get an engraved score on the screen and a PDF beside the file. Ru
 Kompakt; held sideways, the source and the score sit side by side.
 
 Pick a folder of `.ly` files (Cabinet's chooser when Cabinet is installed); `\include`s in that
-folder are followed. See `SOURCES.md` for where every bundled binary comes from and `build/`
-for how they are built.
+folder are followed. A score that sets no paper size is engraved on A6, which fits the screen;
+one with its own `\paper` size keeps it. See `SOURCES.md` for where every bundled binary comes
+from and `build/` for how they are built.
 
 Thanks to [zyny](https://forum.mudita.com/u/zyny) on the Mudita forum, whose request started
 this app.
