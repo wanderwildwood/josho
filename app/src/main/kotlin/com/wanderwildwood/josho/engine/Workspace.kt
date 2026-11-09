@@ -49,7 +49,15 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
         return out
     }
 
-    override fun scores(): List<Doc> = files().filter { it.name.endsWith(".ly") }.sortedBy { it.path.lowercase() }
+    override fun scores(): List<Doc> {
+        // A folder deleted since it was chosen lists as empty, as if it had no scores; asked for
+        // itself, it is not there, and the files page then says so and offers to choose again.
+        val rootId = DocumentsContract.getTreeDocumentId(tree)
+        if (query(DocumentsContract.buildDocumentUriUsingTree(tree, rootId)).isEmpty()) {
+            throw java.io.FileNotFoundException("The chosen folder is not there")
+        }
+        return files().filter { it.name.endsWith(".ly") }.sortedBy { it.path.lowercase() }
+    }
 
     override fun read(doc: Doc): String =
         resolver.openInputStream(Uri.parse(doc.id))!!.use { it.readBytes().toString(Charsets.UTF_8) }

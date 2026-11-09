@@ -45,7 +45,7 @@ fun EngraverApp(
 ) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
-    val lily = remember { LilyPond(context) }
+    val lily = remember { LilyPond(context).apply { paperSize = Prefs.PAPER_SIZES[prefs.paperSize] } }
     // Out of sight, the kept LilyPond goes (it holds memory the phone may want back); the next
     // compile, or opening a score, starts it again.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -65,6 +65,7 @@ fun EngraverApp(
     var textSize by remember { mutableIntStateOf(prefs.textSize) }
     var turn by remember { mutableStateOf(prefs.turn) }
     var foldBars by remember { mutableStateOf(prefs.foldBars) }
+    var paperSize by remember { mutableIntStateOf(prefs.paperSize) }
     var scores by remember { mutableStateOf<List<Doc>?>(null) }
     var lost by remember { mutableStateOf(false) }
     var open by remember { mutableStateOf<Doc?>(null) }
@@ -151,6 +152,12 @@ fun EngraverApp(
                 onTurn = { turn = it; prefs.turn = it; onTurn(it) },
                 foldBars = foldBars,
                 onFoldBars = { foldBars = it; prefs.foldBars = it },
+                paperSize = paperSize,
+                onPaperSize = {
+                    paperSize = it; prefs.paperSize = it
+                    // Off the main thread: it waits for a compile under way to finish.
+                    Thread { lily.paperSize = Prefs.PAPER_SIZES[it] }.start()
+                },
                 onChooseFolder = { pick.launch(null) },
                 onBack = { screen = Screen.Files },
                 onAbout = { about = true },

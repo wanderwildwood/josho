@@ -39,6 +39,11 @@ class Prefs(context: Context) {
         get() = p.getBoolean("foldBars", true)
         set(v) = p.edit().putBoolean("foldBars", v).apply()
 
+    /** An index into [PAPER_SIZES]: the paper for scores that do not name their own. */
+    var paperSize: Int
+        get() = p.getInt("paperSize", 0).coerceIn(PAPER_SIZES.indices)
+        set(v) = p.edit().putInt("paperSize", v).apply()
+
     /** The score last open, by its path in the folder, so the app opens where it was left. */
     var lastScore: String?
         get() = p.getString("lastScore", null)
@@ -52,5 +57,8 @@ class Prefs(context: Context) {
          * is the exception, and only for the source text; the rest of the app stays at 16.
          */
         val TEXT_SIZES = listOf(11, 13, 16, 19)
+
+        /** LilyPond's names. A6 is about a phone's screen; A4 and Letter are for printing. */
+        val PAPER_SIZES = listOf("a6", "a5", "a4", "letter")
     }
 }

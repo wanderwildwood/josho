@@ -51,6 +51,10 @@
     <string name="settings_text_size_house">Usual</string>
     <string name="settings_text_size_large">Large</string>
     <string name="settings_text_size_note">Tiny fits more of a long score on the screen.</string>
+    <string name="settings_paper">Paper size</string>
+    <!-- US Letter paper -->
+    <string name="settings_paper_letter">Letter</string>
+    <string name="settings_paper_note">For scores that do not set their own. A6 fits the screen; A4 and Letter are for printing.</string>
     <string name="settings_fold_bars">Bars while typing</string>
     <string name="settings_fold_bars_fold">Fold away</string>
     <string name="settings_fold_bars_stay">Stay</string>

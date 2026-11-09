@@ -82,6 +82,29 @@ class LilyPond(private val context: Context) {
      * same clean state a fresh process would give it.
      */
     private var server: Process? = null
+
+    /**
+     * The paper a score is engraved on when it does not name its own: a settings file LilyPond
+     * reads before each score (its include-settings option) sets the default, and a \paper
+     * block in the score still wins. (The paper-size option itself left the kept LilyPond's
+     * paper without its sizes, and fails a one-shot run too: "Wrong type (expecting real number)".) A change
+     * ends the kept LilyPond, since it was started with the old file.
+     */
+    @set:Synchronized
+    var paperSize: String = "a6"
+        set(v) {
+            if (v != field) { field = v; stop() }
+        }
+
+    private fun options(): List<String> {
+        val settings = File(context.filesDir, "paper.ly")
+        val line = "#(set-default-paper-size \"$paperSize\")\n"
+        if (!settings.isFile || settings.readText() != line) settings.writeText(line)
+        // The path bare: LilyPond takes this option's value as the file name as it stands, and a
+        // quoted one is a name with quotes in it (tried on the emulator 2026-11-09). The app's own
+        // files folder has no spaces in its path.
+        return listOf("-dbackend=cairo", "--pdf", "-dno-point-and-click", "-dinclude-settings=${settings.path}")
+    }
     private var serverOut: java.io.BufferedReader? = null
     private var serverRuns = 0
 
@@ -123,7 +146,7 @@ class LilyPond(private val context: Context) {
     private fun startServer() {
         val pb = processBuilder(
             context.cacheDir,
-            listOf(exe.path, "-dbackend=cairo", "--pdf", "-dno-point-and-click", "-e", SERVER_SCHEME, "-"),
+            listOf(exe.path) + options() + listOf("-e", SERVER_SCHEME, "-"),
             autoCompile = false,
         )
         val p = pb.start()
@@ -159,7 +182,7 @@ class LilyPond(private val context: Context) {
     }
 
     private fun oneShot(dir: File, name: String, autoCompile: Boolean): Pair<Int, String> {
-        val pb = processBuilder(dir, listOf(exe.path, "-dbackend=cairo", "--pdf", "-dno-point-and-click", name), autoCompile)
+        val pb = processBuilder(dir, listOf(exe.path) + options() + listOf(name), autoCompile)
         val p = pb.start()
         val log = p.inputStream.bufferedReader().readText()
         return p.waitFor() to log
