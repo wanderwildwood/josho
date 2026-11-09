@@ -36,13 +36,13 @@
     <string name="settings_folder">Folder</string>
     <string name="settings_folder_none">None chosen</string>
     <!-- Which way the screen is held -->
-    <string name="settings_turn">Which way round</string>
+    <string name="settings_turn">Orientation</string>
     <!-- Portrait -->
-    <string name="settings_turn_upright">Upright</string>
+    <string name="settings_turn_upright">Portrait</string>
     <!-- Landscape -->
-    <string name="settings_turn_across">Across</string>
+    <string name="settings_turn_across">Landscape</string>
     <!-- Landscape, upside down -->
-    <string name="settings_turn_around">Across, turned around</string>
+    <string name="settings_turn_around">Landscape, upside down</string>
     <!-- Follows the phone's rotation, read from its motion sensor -->
     <string name="settings_turn_device">Turns with the phone</string>
     <string name="settings_text_size">Editor text size</string>
