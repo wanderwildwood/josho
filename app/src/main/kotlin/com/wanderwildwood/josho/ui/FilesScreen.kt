@@ -21,17 +21,17 @@ import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 import com.wanderwildwood.josho.R
 import com.wanderwildwood.josho.engine.Doc
 
-/** The top bar of the home and settings screens: a title, Back where there is one, cog and info. */
+/** The top bar: a title, Back where there is one, the cog on the home screen, the info icon on Settings (as in every app). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Bar(title: String, onBack: (() -> Unit)?, onSettings: (() -> Unit)?, onAbout: () -> Unit, extra: @Composable () -> Unit = {}) {
+fun Bar(title: String, onBack: (() -> Unit)?, onSettings: (() -> Unit)?, onAbout: (() -> Unit)?, extra: @Composable () -> Unit = {}) {
     TopAppBarMMD(
         title = { TextMMD(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = { if (onBack != null) BarButton(Icons.Back, stringResource(R.string.cd_back), onBack) },
         actions = {
             extra()
             if (onSettings != null) BarButton(Icons.Settings, stringResource(R.string.cd_settings), onSettings)
-            BarButton(Icons.Info, stringResource(R.string.cd_about), onAbout)
+            if (onAbout != null) BarButton(Icons.Info, stringResource(R.string.cd_about), onAbout)
         },
     )
 }
@@ -47,11 +47,10 @@ fun FilesScreen(
     onOpen: (Doc) -> Unit,
     onNew: () -> Unit,
     onSettings: () -> Unit,
-    onAbout: () -> Unit,
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { Bar(title, null, onSettings, onAbout) },
+        topBar = { Bar(title, null, onSettings, null) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (!chosen || lost) {

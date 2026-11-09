@@ -107,7 +107,7 @@ fun EngraverApp(
 
     when (screen) {
         Screen.Files -> FilesScreen(
-            title = if (folderUri == null) stringResource(R.string.app_name) else remember(folder) { runCatching { folder.title() }.getOrDefault("") },
+            title = stringResource(R.string.app_name),
             chosen = folderUri != null,
             scores = scores,
             lost = lost,
@@ -121,7 +121,6 @@ fun EngraverApp(
                 }
             },
             onSettings = { screen = Screen.Settings },
-            onAbout = { about = true },
         )
         Screen.Editor -> {
             val doc = open
@@ -137,7 +136,6 @@ fun EngraverApp(
                     autoCompileScheme = autoCompileScheme,
                     layout = layout,
                     onBack = { screen = Screen.Files; reload++ },
-                    onAbout = { about = true },
                 )
             }
         }

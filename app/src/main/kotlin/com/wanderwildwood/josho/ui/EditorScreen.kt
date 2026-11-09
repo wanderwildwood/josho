@@ -106,7 +106,6 @@ fun EditorScreen(
     /** Debug only: "side" or "tabs" forces a layout, for comparing them in screenshots. */
     layout: String? = null,
     onBack: () -> Unit,
-    onAbout: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -195,7 +194,7 @@ fun EditorScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { if (!folded) Bar(doc.name, { save(); onBack() }, null, onAbout) },
+        topBar = { if (!folded) Bar(doc.name, { save(); onBack() }, null, null) },
     ) { padding ->
         BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
             // Held across (a Kompakt across is 533 x 320 dp) or 600 dp wide (the Supernotes):
