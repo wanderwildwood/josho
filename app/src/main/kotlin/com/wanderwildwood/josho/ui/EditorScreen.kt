@@ -1,6 +1,12 @@
 package com.wanderwildwood.josho.ui
 
+import android.media.MediaPlayer
 import android.util.Log
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -119,6 +125,9 @@ fun EditorScreen(
     var pdfStamp by remember(doc.id) { mutableStateOf(0L) }
     var page by remember(doc.id) { mutableIntStateOf(0) }
     var scoreShown by remember(doc.id) { mutableStateOf(true) }
+    var midi by remember(doc.id) { mutableStateOf<File?>(null) }
+    // The score on the whole screen, opened by a tap on it; Back returns to the editor.
+    var full by remember(doc.id) { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     // The on-screen keyboard up: the reader is typing, and the bars give the source their room.
     val keyboardUp = rememberKeyboardUp()
@@ -174,7 +183,7 @@ fun EditorScreen(
                     warned -> context.getString(R.string.compiled_with_warnings, seconds)
                     else -> context.getString(R.string.compiled_in, seconds)
                 }
-                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0; scoreShown = true }
+                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0; scoreShown = true; midi = r.midi }
                 pane = when {
                     r.exit != 0 || r.pdf == null -> Pane.Log
                     wide -> Pane.Source
@@ -190,6 +199,13 @@ fun EditorScreen(
         text = t.copy(selection = TextRange(at))
         pane = Pane.Source
         runCatching { focus.requestFocus() }
+    }
+
+    val shownPdf = pdf
+    if (full && shownPdf != null) {
+        BackHandler { full = false }
+        FullScore(doc.name, shownPdf, pdfStamp, page, { page = it }, midi, onClose = { full = false })
+        return
     }
 
     Scaffold(
@@ -255,6 +271,10 @@ fun EditorScreen(
                             when (shown) {
                                 Pane.Source -> SourcePane(
                                     text, { text = it }, textSize, focus,
+                                    keyboardUp = keyboardUp,
+                                    // Side by side, a tap on the source folds the score away, as
+                                    // the Score button does; a compile brings it back.
+                                    onTouch = { if (wide && scoreShown) scoreShown = false },
                                     symbols = when {
                                         // Held across beside the score: one row of eight, and
                                         // the rest a press away; with the score folded away
@@ -267,7 +287,7 @@ fun EditorScreen(
                                     },
                                 )
                                 Pane.Log -> LogPane(log, doc.name, ::jumpTo)
-                                Pane.Score -> ScorePane(pdf, pdfStamp, page, { page = it })
+                                Pane.Score -> ScorePane(pdf, pdfStamp, page, { page = it }, onOpen = { full = true })
                             }
                         }
                     }
@@ -277,7 +297,7 @@ fun EditorScreen(
                         sourceSide(Modifier.weight(1f).fillMaxHeight())
                         Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface))
                         // Half and half when held across: the symbol keys need the source's width.
-                        Box(Modifier.weight(if (across) 1f else 1.3f).fillMaxHeight()) { ScorePane(pdf, pdfStamp, page, { page = it }) }
+                        Box(Modifier.weight(if (across) 1f else 1.3f).fillMaxHeight()) { ScorePane(pdf, pdfStamp, page, { page = it }, onOpen = { full = true }) }
                     }
                 } else {
                     sourceSide(Modifier.fillMaxWidth().weight(1f))
@@ -297,17 +317,32 @@ private fun SourcePane(
     textSize: Int,
     focus: FocusRequester,
     symbols: Symbols,
+    keyboardUp: Boolean,
+    onTouch: () -> Unit,
 ) {
     if (value == null) return
+    val keyboard = LocalSoftwareKeyboardController.current
+    // A symbol key types into the source without bringing the keyboard up: with the keyboard
+    // down, the reader is placing symbols and wants the screen.
+    val insert: (TextFieldValue) -> Unit = { v ->
+        val wasUp = keyboardUp
+        onValue(v)
+        if (!wasUp) keyboard?.hide()
+    }
     Column(Modifier.fillMaxSize()) {
         BasicTextField(
             value = value,
             onValueChange = onValue,
             textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = textSize.sp, color = Color.Black),
             cursorBrush = SolidColor(Color.Black),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp).focusRequester(focus).textActions(),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, showKeyboardOnFocus = false),
+            modifier = Modifier.weight(1f).fillMaxWidth()
+                .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(requireUnconsumed = false); onTouch() } }
+                .padding(horizontal = 12.dp, vertical = 8.dp).focusRequester(focus).textActions(),
         )
+        // The on-screen keyboard is up: it has these symbols on its own pages, and the source
+        // needs every line it can get (held across, it had one).
+        if (keyboardUp) return@Column
         // A full keyboard attached (the Manta's, or one on the Kompakt held across) has these
         // keys already; the room goes to the source instead. The Kompakt alone reports
         // "nokeys", so it keeps them.
@@ -319,7 +354,7 @@ private fun SourcePane(
             // Eight keys and a "more" key that turns to the other seven and back.
             var second by remember { mutableStateOf(false) }
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                (if (second) SYMBOLS.drop(8) else SYMBOLS.take(8)).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+                (if (second) SYMBOLS.drop(8) else SYMBOLS.take(8)).forEach { SymbolKey(it, value, insert, Modifier.weight(1f)) }
                 val more = stringResource(R.string.cd_more_symbols)
                 Box(
                     Modifier.weight(1f).heightIn(min = 44.dp).border(1.dp, MaterialTheme.colorScheme.onSurface)
@@ -335,15 +370,15 @@ private fun SourcePane(
         if (symbols == Symbols.OneRow) {
             // Held across, all fifteen fit on one row and leave the height for the text.
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                SYMBOLS.forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+                SYMBOLS.forEach { SymbolKey(it, value, insert, Modifier.weight(1f)) }
             }
         }
         if (symbols == Symbols.TwoRows) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                SYMBOLS.take(8).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+                SYMBOLS.take(8).forEach { SymbolKey(it, value, insert, Modifier.weight(1f)) }
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                SYMBOLS.drop(8).forEach { SymbolKey(it, value, onValue, Modifier.weight(1f)) }
+                SYMBOLS.drop(8).forEach { SymbolKey(it, value, insert, Modifier.weight(1f)) }
             }
         }
     }
@@ -402,7 +437,7 @@ private fun LogPane(log: List<LogLine>, fileName: String, onJump: (LogLine) -> U
  * the next page after its last screen. Nothing scrolls.
  */
 @Composable
-private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit) {
+private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit, onOpen: (() -> Unit)? = null) {
     if (pdf == null) {
         TextMMD(text = stringResource(R.string.no_score_yet), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(20.dp))
         return
@@ -426,7 +461,11 @@ private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit)
     fun next() { if (at < screens - 1) screen = at + 1 else if (page < pages - 1) { backwards = false; onPage(page + 1) } }
     fun previous() { if (at > 0) screen = at - 1 else if (page > 0) { backwards = true; onPage(page - 1) } }
     Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { size = it }) {
+        val open = stringResource(R.string.cd_score_full)
+        Box(
+            Modifier.weight(1f).fillMaxWidth().onSizeChanged { size = it }
+                .then(if (onOpen != null) Modifier.clickable(onClick = onOpen).semantics { contentDescription = open } else Modifier),
+        ) {
             slice?.let {
                 Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.FillWidth, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize())
             }
@@ -446,6 +485,55 @@ private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit)
                 )
                 HouseButton(stringResource(R.string.page_next), ::next, enabled = page < pages - 1 || at < screens - 1, compact = true)
             }
+        }
+    }
+}
+
+/**
+ * The score on the whole screen: the title bar with Back, a Play button when LilyPond wrote MIDI
+ * (the score has a midi block), and the pages, turned as in the pane. Played by Android's own
+ * MIDI synthesizer; nothing leaves the phone. Leaving stops the sound.
+ */
+@Composable
+private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (Int) -> Unit, midi: File?, onClose: () -> Unit) {
+    var player by remember { mutableStateOf<MediaPlayer?>(null) }
+    // Stopping and releasing happen off the main thread: without a working audio output
+    // MediaPlayer.stop() can block, and the screen must still answer Back.
+    fun stop() {
+        val p = player ?: return
+        player = null
+        Thread { runCatching { p.stop() }; runCatching { p.release() } }.start()
+    }
+    DisposableEffect(midi) { onDispose { stop() } }
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = { Bar(name, onClose, null, null) },
+    ) { padding ->
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (midi != null) {
+                    val playing = player != null
+                    HouseButton(stringResource(if (playing) R.string.stop else R.string.play), {
+                        if (playing) stop() else player = runCatching {
+                            MediaPlayer().apply {
+                                setDataSource(midi.path)
+                                setOnPreparedListener { if (player === it) it.start() }
+                                setOnCompletionListener { if (player === it) stop() }
+                                setOnErrorListener { mp, what, extra -> Log.e(TAG, "play error $what/$extra"); if (player === mp) stop(); true }
+                                prepareAsync()
+                            }
+                        }.onFailure { Log.e(TAG, "play failed", it) }.getOrNull()
+                    }, on = true, compact = true)
+                } else {
+                    TextMMD(text = stringResource(R.string.no_midi), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                }
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.onSurface))
+            Box(Modifier.weight(1f).fillMaxWidth()) { ScorePane(pdf, stamp, page, onPage) }
         }
     }
 }

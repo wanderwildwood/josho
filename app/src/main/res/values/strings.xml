@@ -58,6 +58,10 @@
     <!-- Side by side: shows or folds away the engraved score -->
     <string name="score_button">Score</string>
     <string name="cd_more_symbols">More symbols</string>
+    <string name="cd_score_full">Open the score on the whole screen</string>
+    <string name="play">Play</string>
+    <string name="stop">Stop</string>
+    <string name="no_midi">No sound: add \\midi { } inside \\score to hear it.</string>
 
     <string name="cd_back">Back</string>
     <string name="cd_about">About</string>
