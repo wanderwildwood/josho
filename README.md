@@ -12,7 +12,8 @@ sit side by side.
 
 Pick a folder of `.ly` files (Cabinet's chooser when Cabinet is installed); `\include`s in that
 folder are followed. A score that sets no paper size is engraved on A6, which fits the screen;
-one with its own `\paper` size keeps it. See `SOURCES.md` for where every bundled binary comes
+one with its own `\paper` size keeps it. Tap the engraved score to read it on the whole screen, and, when the
+score has a `\midi` block, to hear it played by the phone's own synthesizer. See `SOURCES.md` for where every bundled binary comes
 from and `build/` for how they are built.
 
 ## What it does not do
