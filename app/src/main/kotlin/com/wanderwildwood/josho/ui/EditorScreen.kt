@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.Image
@@ -215,11 +216,15 @@ fun EditorScreen(
         BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
             // Held across (a Kompakt across is 533 x 320 dp) or 600 dp wide (the Supernotes):
             // source and score side by side. Upright on a phone: one pane at a time, by tabs.
-            val landscape = maxWidth > maxHeight
-            val wide = when (layout) { "side" -> true; "tabs" -> false; else -> maxWidth >= 600.dp || landscape }
+            // Decided by the screen, not by this box: the keyboard coming up shrinks the box to
+            // wider than tall, and switching to side by side then rebuilt the text field, which
+            // lost focus and closed the keyboard again the moment it opened.
+            val screenConf = LocalConfiguration.current
+            val landscape = screenConf.screenWidthDp > screenConf.screenHeightDp
+            val wide = when (layout) { "side" -> true; "tabs" -> false; else -> screenConf.screenWidthDp >= 600 || landscape }
             // Short of height (a Kompakt across): one header row, and the symbol keys in two
             // short rows under the source, so the score keeps the column's full height.
-            val across = landscape && maxHeight < 480.dp
+            val across = landscape && screenConf.screenHeightDp < 480
             LaunchedEffect(text != null, autoCompile) { if (autoCompile && text != null) compile(wide) }
             val keys = Modifier.onPreviewKeyEvent { e ->
                 if (e.type != KeyEventType.KeyDown || !e.isCtrlPressed) false
@@ -292,15 +297,16 @@ fun EditorScreen(
                         }
                     }
                 }
-                if (wide && scoreShown) {
-                    Row(Modifier.fillMaxWidth().weight(1f)) {
-                        sourceSide(Modifier.weight(1f).fillMaxHeight())
+                // One shape whether the score is beside the source or folded away, so the source
+                // (and the text field in it) stays the same one: rebuilt, it would lose focus and
+                // close the keyboard that the tap folding the score had just opened.
+                Row(Modifier.fillMaxWidth().weight(1f)) {
+                    sourceSide(Modifier.weight(1f).fillMaxHeight())
+                    if (wide && scoreShown) {
                         Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface))
                         // Half and half when held across: the symbol keys need the source's width.
                         Box(Modifier.weight(if (across) 1f else 1.3f).fillMaxHeight()) { ScorePane(pdf, pdfStamp, page, { page = it }, onOpen = { full = true }) }
                     }
-                } else {
-                    sourceSide(Modifier.fillMaxWidth().weight(1f))
                 }
             }
         }
@@ -330,16 +336,23 @@ private fun SourcePane(
         if (!wasUp) keyboard?.hide()
     }
     Column(Modifier.fillMaxSize()) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValue,
-            textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = textSize.sp, color = Color.Black),
-            cursorBrush = SolidColor(Color.Black),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, showKeyboardOnFocus = false),
-            modifier = Modifier.weight(1f).fillMaxWidth()
-                .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(requireUnconsumed = false); onTouch() } }
-                .padding(horizontal = 12.dp, vertical = 8.dp).focusRequester(focus).textActions(),
-        )
+        // The touch is only watched on its way past (the Initial pass, nothing consumed): the
+        // text field under it still gets the tap that places the cursor and raises the keyboard.
+        val touched by androidx.compose.runtime.rememberUpdatedState(onTouch)
+        Box(
+            Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
+                awaitEachGesture { awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial); touched() }
+            },
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValue,
+                textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = textSize.sp, color = Color.Black),
+                cursorBrush = SolidColor(Color.Black),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp).focusRequester(focus).textActions(),
+            )
+        }
         // The on-screen keyboard is up: it has these symbols on its own pages, and the source
         // needs every line it can get (held across, it had one).
         if (keyboardUp) return@Column
@@ -497,6 +510,13 @@ private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit,
 @Composable
 private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (Int) -> Unit, midi: File?, onClose: () -> Unit) {
     var player by remember { mutableStateOf<MediaPlayer?>(null) }
+    // The volume keys turn the media volume here, as in a music player, before Play as well.
+    val activity = LocalContext.current as? android.app.Activity
+    DisposableEffect(activity) {
+        val before = activity?.volumeControlStream
+        activity?.volumeControlStream = android.media.AudioManager.STREAM_MUSIC
+        onDispose { if (before != null) activity.volumeControlStream = before }
+    }
     // Stopping and releasing happen off the main thread: without a working audio output
     // MediaPlayer.stop() can block, and the screen must still answer Back.
     fun stop() {
@@ -520,6 +540,12 @@ private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (
                     HouseButton(stringResource(if (playing) R.string.stop else R.string.play), {
                         if (playing) stop() else player = runCatching {
                             MediaPlayer().apply {
+                                setAudioAttributes(
+                                    android.media.AudioAttributes.Builder()
+                                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .build(),
+                                )
                                 setDataSource(midi.path)
                                 setOnPreparedListener { if (player === it) it.start() }
                                 setOnCompletionListener { if (player === it) stop() }

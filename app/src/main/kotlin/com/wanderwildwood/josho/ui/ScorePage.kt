@@ -28,8 +28,12 @@ fun renderPage(pdf: File, page: Int, width: Int): Bitmap? = runCatching {
             val rough = draw(p, w, (p.height * s1).toInt().coerceAtLeast(1), Matrix().apply { setScale(s1, s1) })
             val box = inkBox(rough) ?: return@use rough
             val pad = (w * 0.02f).toInt()
-            val x0 = (box[0] - pad).coerceAtLeast(0); val y0 = (box[1] - pad).coerceAtLeast(0)
-            val x1 = (box[2] + pad).coerceAtMost(rough.width); val y1 = (box[3] + pad).coerceAtMost(rough.height)
+            // The same width comes off both sides, the narrower of the two blanks: LilyPond
+            // centers a title on the page, and a first line indented (its default) leaves more
+            // paper on the left, so cutting each side to its own ink pushed the title off center.
+            val side = (minOf(box[0], rough.width - box[2]) - pad).coerceAtLeast(0)
+            val x0 = side; val y0 = (box[1] - pad).coerceAtLeast(0)
+            val x1 = rough.width - side; val y1 = (box[3] + pad).coerceAtMost(rough.height)
             rough.recycle()
             val k = w.toFloat() / (x1 - x0)
             val h = ((y1 - y0) * k).toInt().coerceAtLeast(1)
