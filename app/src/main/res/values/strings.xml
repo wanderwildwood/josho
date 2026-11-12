@@ -31,6 +31,30 @@
     <string name="cd_insert">Insert %1$s</string>
     <string name="unsaved">Not saved</string>
 
+    <!-- The editor's menu (three dots), and the one on a score held down in the list -->
+    <string name="cd_more">More</string>
+    <string name="menu_undo">Undo</string>
+    <string name="menu_redo">Redo</string>
+    <string name="menu_save_as">Save as</string>
+    <string name="menu_copy">Copy</string>
+    <string name="menu_delete">Delete</string>
+    <!-- The Delete row after its first tap -->
+    <string name="menu_delete_armed">Delete — tap again</string>
+    <string name="menu_open_in">Open in another app</string>
+    <string name="menu_print">Print</string>
+    <!-- Heading of the dialog that asks for the copy's name; %1$s is the score being copied -->
+    <string name="copy_title">Copy %1$s</string>
+    <string name="name_save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="name_empty">Give it a name.</string>
+    <string name="name_taken">There is already a score with that name.</string>
+    <string name="name_unusable">A name cannot have a slash in it.</string>
+    <string name="save_as_failed">The copy could not be saved.</string>
+    <string name="copy_failed">The copy could not be made.</string>
+    <string name="delete_failed">The score could not be deleted.</string>
+    <string name="no_pdf_app">No app on this device opens a PDF.</string>
+    <string name="print_failed">Printing could not start.</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_folder">Folder</string>

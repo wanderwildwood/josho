@@ -1,6 +1,7 @@
 package com.wanderwildwood.josho.ui
 
 import android.media.MediaPlayer
+import android.os.SystemClock
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -78,11 +80,16 @@ import androidx.compose.ui.unit.sp
 import com.mudita.mmd.components.text.TextMMD
 import com.wanderwildwood.josho.R
 import com.wanderwildwood.josho.engine.Doc
+import com.wanderwildwood.josho.engine.EditHistory
 import com.wanderwildwood.josho.engine.Folder
 import com.wanderwildwood.josho.engine.LilyPond
 import com.wanderwildwood.josho.engine.LogLine
+import com.wanderwildwood.josho.engine.copyScore
+import com.wanderwildwood.josho.engine.deleteScore
+import com.wanderwildwood.josho.engine.nextFreeName
 import com.wanderwildwood.josho.engine.offsetOf
 import com.wanderwildwood.josho.engine.parseLog
+import com.wanderwildwood.josho.engine.pdfBeside
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -100,6 +107,10 @@ private val SYMBOLS = listOf("\\", "{", "}", "<", ">", "'", ",", "~", "(", ")", 
  * Side by side, the Score button folds the score away so the source has the whole width, and a
  * compile brings it back. With [foldBars], the title bar and the Compile row fold away while the
  * on-screen keyboard is up, and come back when it goes down.
+ *
+ * The three dots in the title bar open the one menu: Undo and Redo for the source, Save as
+ * (the copy is then the score being edited, [onSavedAs]), Delete ([onDeleted], after the score
+ * and what compiling left beside it are gone), and the engraved PDF to another app or a printer.
  */
 @Composable
 fun EditorScreen(
@@ -112,6 +123,8 @@ fun EditorScreen(
     autoCompileScheme: Boolean = false,
     /** Debug only: "side" or "tabs" forces a layout, for comparing them in screenshots. */
     layout: String? = null,
+    onSavedAs: (Doc) -> Unit = {},
+    onDeleted: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -129,6 +142,15 @@ fun EditorScreen(
     var midi by remember(doc.id) { mutableStateOf<File?>(null) }
     // The score on the whole screen, opened by a tap on it; Back returns to the editor.
     var full by remember(doc.id) { mutableStateOf(false) }
+    // What was typed, to take back and put again; another score starts with none.
+    val history = remember(doc.id) { EditHistory() }
+    var menu by remember(doc.id) { mutableStateOf(false) }
+    // The PDF beside the score, from this compile or an earlier day's: what Open in and Print hand on.
+    var engraved by remember(doc.id) { mutableStateOf<Doc?>(null) }
+    var compiles by remember(doc.id) { mutableIntStateOf(0) }
+    // Save as is asking for a name: the names already in the folder, which it may not take.
+    var naming by remember(doc.id) { mutableStateOf<List<String>?>(null) }
+    val prints = remember { canPrint(context) }
     val focus = remember { FocusRequester() }
     // The on-screen keyboard up: the reader is typing, and the bars give the source their room.
     val keyboardUp = rememberKeyboardUp()
@@ -140,7 +162,22 @@ fun EditorScreen(
     LaunchedEffect(doc.id) {
         val read = withContext(Dispatchers.IO) { runCatching { folder.read(doc) }.getOrDefault("") }
         savedText = read
+        history.reset(EditHistory.Snapshot(read))
         text = TextFieldValue(read)
+    }
+
+    LaunchedEffect(doc.id, compiles) {
+        engraved = withContext(Dispatchers.IO) { runCatching { pdfBeside(folder, doc) }.getOrNull() }
+    }
+
+    /** Every change to the source comes through here, so it can be taken back. */
+    fun edit(v: TextFieldValue) {
+        history.record(EditHistory.Snapshot(v.text, v.selection.start, v.selection.end), SystemClock.uptimeMillis())
+        text = v
+    }
+
+    fun restore(step: EditHistory.Snapshot?) {
+        if (step != null) text = TextFieldValue(step.text, TextRange(step.start, step.end))
     }
 
     fun save() {
@@ -169,6 +206,7 @@ fun EditorScreen(
                 }
             }
             busy = false
+            compiles++
             // Written before compiling, whatever came of it after.
             if (outcome.isSuccess || outcome.exceptionOrNull() !is java.io.IOException) savedText = t
             outcome.onFailure {
@@ -197,9 +235,31 @@ fun EditorScreen(
     fun jumpTo(line: LogLine) {
         val t = text ?: return
         val at = offsetOf(t.text, line.line, line.column)
-        text = t.copy(selection = TextRange(at))
+        edit(t.copy(selection = TextRange(at)))
         pane = Pane.Source
         runCatching { focus.requestFocus() }
+    }
+
+    fun askName() {
+        scope.launch {
+            naming = withContext(Dispatchers.IO) { runCatching { folder.beside(doc).map { it.name } }.getOrDefault(emptyList()) }
+        }
+    }
+
+    // What is in the editor now goes into the copy; the original stays as it was last saved.
+    fun saveAs(name: String) {
+        val t = text?.text ?: return
+        scope.launch {
+            val copy = withContext(Dispatchers.IO) { runCatching { copyScore(folder, doc, name, t) }.getOrNull() }
+            if (copy != null) onSavedAs(copy) else status = context.getString(R.string.save_as_failed)
+        }
+    }
+
+    fun delete() {
+        scope.launch {
+            val gone = withContext(Dispatchers.IO) { runCatching { deleteScore(folder, doc) }.getOrDefault(false) }
+            if (gone) onDeleted() else status = context.getString(R.string.delete_failed)
+        }
     }
 
     val shownPdf = pdf
@@ -209,9 +269,58 @@ fun EditorScreen(
         return
     }
 
+    naming?.let { taken ->
+        ScoreNameDialog(
+            title = stringResource(R.string.menu_save_as),
+            confirm = stringResource(R.string.name_save),
+            initial = remember(taken) { nextFreeName(doc.name, taken) },
+            taken = taken,
+            onDone = ::saveAs,
+            onDismiss = { naming = null },
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { if (!folded) Bar(doc.name, { save(); onBack() }, null, null) },
+        topBar = {
+            if (!folded) Bar(doc.name, { save(); onBack() }, null, null) {
+                Box {
+                    BarButton(Icons.More, stringResource(R.string.cd_more)) { menu = true }
+                    HouseMenu(menu, { menu = false }) {
+                        MenuRow(stringResource(R.string.menu_undo), first = true, enabled = history.canUndo) {
+                            menu = false
+                            restore(history.undo())
+                        }
+                        MenuRow(stringResource(R.string.menu_redo), enabled = history.canRedo) {
+                            menu = false
+                            restore(history.redo())
+                        }
+                        MenuRow(stringResource(R.string.menu_save_as), enabled = text != null) {
+                            menu = false
+                            askName()
+                        }
+                        // Not while LilyPond is at work on it: the PDF would land beside nothing.
+                        ArmedMenuRow(stringResource(R.string.menu_delete), stringResource(R.string.menu_delete_armed), enabled = !busy) {
+                            menu = false
+                            delete()
+                        }
+                        val pdfDoc = engraved
+                        MenuRow(stringResource(R.string.menu_open_in), enabled = pdfDoc != null) {
+                            menu = false
+                            if (pdfDoc != null && !openElsewhere(context, pdfDoc)) status = context.getString(R.string.no_pdf_app)
+                        }
+                        if (prints) {
+                            MenuRow(stringResource(R.string.menu_print), enabled = pdfDoc != null) {
+                                menu = false
+                                if (pdfDoc != null && !printPdf(context, pdfDoc, doc.name.substringBeforeLast('.'))) {
+                                    status = context.getString(R.string.print_failed)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
     ) { padding ->
         BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
             // Held across (a Kompakt across is 533 x 320 dp) or 600 dp wide (the Supernotes):
@@ -231,6 +340,8 @@ fun EditorScreen(
                 else when (e.key) {
                     Key.Enter, Key.M -> { compile(wide); true }   // Ctrl+M is Frescobaldi's Engrave
                     Key.S -> { save(); true }
+                    Key.Z -> { restore(if (e.isShiftPressed) history.redo() else history.undo()); true }
+                    Key.Y -> { restore(history.redo()); true }
                     else -> false
                 }
             }
@@ -275,7 +386,7 @@ fun EditorScreen(
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (shown) {
                                 Pane.Source -> SourcePane(
-                                    text, { text = it }, textSize, focus,
+                                    text, ::edit, textSize, focus,
                                     keyboardUp = keyboardUp,
                                     // Side by side, a tap on the source folds the score away, as
                                     // the Score button does; a compile brings it back.

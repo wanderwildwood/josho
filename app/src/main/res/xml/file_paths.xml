@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What "Open in another app" and Print may hand out from the app's own storage: the sample
+     folder (files/scratch), where a score's PDF is written before a folder has been chosen.
+     A chosen folder's PDF is handed out by its own address and needs none of this. -->
+<paths>
+    <files-path name="scores" path="scratch/" />
+</paths>

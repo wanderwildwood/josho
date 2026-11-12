@@ -1,7 +1,9 @@
 package com.wanderwildwood.josho.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +14,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,7 +42,11 @@ fun Bar(title: String, onBack: (() -> Unit)?, onSettings: (() -> Unit)?, onAbout
     )
 }
 
-/** The folder's scores. With none chosen yet, the sample in the app's own folder, and the way to choose one. */
+/**
+ * The folder's scores. With none chosen yet, the sample in the app's own folder, and the way to
+ * choose one. A score held down offers Copy and Delete.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FilesScreen(
     title: String,
@@ -47,7 +57,11 @@ fun FilesScreen(
     onOpen: (Doc) -> Unit,
     onNew: () -> Unit,
     onSettings: () -> Unit,
+    onCopy: (Doc) -> Unit = {},
+    onDelete: (Doc) -> Unit = {},
 ) {
+    // The score held down, whose menu is open.
+    var held by remember { mutableStateOf<String?>(null) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = { Bar(title, null, onSettings, null) },
@@ -84,12 +98,26 @@ fun FilesScreen(
                 ) {
                     items(scores.size) { i ->
                         val doc = scores[i]
-                        Column(
-                            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable { onOpen(doc) }.padding(vertical = 12.dp),
-                        ) {
-                            TextMMD(text = doc.name, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            if (doc.path != doc.name) {
-                                TextMMD(text = doc.path.substringBeforeLast('/'), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Box {
+                            Column(
+                                Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                                    .combinedClickable(onLongClick = { held = doc.id }, onClick = { onOpen(doc) })
+                                    .padding(vertical = 12.dp),
+                            ) {
+                                TextMMD(text = doc.name, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                if (doc.path != doc.name) {
+                                    TextMMD(text = doc.path.substringBeforeLast('/'), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                            HouseMenu(held == doc.id, { held = null }) {
+                                MenuRow(stringResource(R.string.menu_copy), first = true) {
+                                    held = null
+                                    onCopy(doc)
+                                }
+                                ArmedMenuRow(stringResource(R.string.menu_delete), stringResource(R.string.menu_delete_armed)) {
+                                    held = null
+                                    onDelete(doc)
+                                }
                             }
                         }
                         if (i < scores.lastIndex) DottedRule()

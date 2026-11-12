@@ -2,6 +2,7 @@ package com.wanderwildwood.josho.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
@@ -26,6 +27,9 @@ import com.wanderwildwood.josho.engine.Folder
 import com.wanderwildwood.josho.engine.LilyPond
 import com.wanderwildwood.josho.engine.LocalFolder
 import com.wanderwildwood.josho.engine.Workspace
+import com.wanderwildwood.josho.engine.copyScore
+import com.wanderwildwood.josho.engine.deleteScore
+import com.wanderwildwood.josho.engine.nextFreeName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,6 +73,8 @@ fun EngraverApp(
     var lost by remember { mutableStateOf(false) }
     var open by remember { mutableStateOf<Doc?>(null) }
     var reload by remember { mutableIntStateOf(0) }
+    // A score on the files page being copied: itself, and the names already in its folder.
+    var copying by remember { mutableStateOf<Pair<Doc, List<String>>?>(null) }
     val sample = remember { context.assets.open("sample.ly").bufferedReader().readText() }
     // A new score starts from the least LilyPond needs: a header, one note, layout and MIDI.
     val blank = remember { context.assets.open("new.ly").bufferedReader().readText() }
@@ -105,6 +111,23 @@ fun EngraverApp(
 
     if (about) AboutDialog(onDismiss = { about = false })
 
+    copying?.let { (doc, taken) ->
+        ScoreNameDialog(
+            title = stringResource(R.string.copy_title, doc.name),
+            confirm = stringResource(R.string.menu_copy),
+            initial = remember(doc.id, taken) { nextFreeName(doc.name, taken) },
+            taken = taken,
+            onDone = { name ->
+                scope.launch {
+                    val copy = withContext(Dispatchers.IO) { runCatching { copyScore(folder, doc, name) }.getOrNull() }
+                    if (copy == null) Toast.makeText(context, R.string.copy_failed, Toast.LENGTH_SHORT).show()
+                    reload++
+                }
+            },
+            onDismiss = { copying = null },
+        )
+    }
+
     when (screen) {
         Screen.Files -> FilesScreen(
             title = stringResource(R.string.app_name),
@@ -121,6 +144,21 @@ fun EngraverApp(
                 }
             },
             onSettings = { screen = Screen.Settings },
+            onCopy = { doc ->
+                scope.launch {
+                    val taken = withContext(Dispatchers.IO) { runCatching { folder.beside(doc).map { it.name } }.getOrDefault(emptyList()) }
+                    copying = doc to taken
+                }
+            },
+            onDelete = { doc ->
+                scope.launch {
+                    val gone = withContext(Dispatchers.IO) { runCatching { deleteScore(folder, doc) }.getOrDefault(false) }
+                    if (!gone) Toast.makeText(context, R.string.delete_failed, Toast.LENGTH_SHORT).show()
+                    if (prefs.lastScore == doc.path) prefs.lastScore = null
+                    if (open?.id == doc.id) open = null
+                    reload++
+                }
+            },
         )
         Screen.Editor -> {
             val doc = open
@@ -135,6 +173,8 @@ fun EngraverApp(
                     foldBars = foldBars,
                     autoCompileScheme = autoCompileScheme,
                     layout = layout,
+                    onSavedAs = { copy -> open = copy; prefs.lastScore = copy.path },
+                    onDeleted = { open = null; prefs.lastScore = null; screen = Screen.Files; reload++ },
                     onBack = { screen = Screen.Files; reload++ },
                 )
             }
