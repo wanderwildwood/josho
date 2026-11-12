@@ -280,6 +280,9 @@ fun EditorScreen(
         )
     }
 
+    // The system Back leaves the way the bar's arrow does: what was typed is saved first.
+    BackHandler { save(); onBack() }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -299,11 +302,6 @@ fun EditorScreen(
                             menu = false
                             askName()
                         }
-                        // Not while LilyPond is at work on it: the PDF would land beside nothing.
-                        ArmedMenuRow(stringResource(R.string.menu_delete), stringResource(R.string.menu_delete_armed), enabled = !busy) {
-                            menu = false
-                            delete()
-                        }
                         val pdfDoc = engraved
                         MenuRow(stringResource(R.string.menu_open_in), enabled = pdfDoc != null) {
                             menu = false
@@ -316,6 +314,11 @@ fun EditorScreen(
                                     status = context.getString(R.string.print_failed)
                                 }
                             }
+                        }
+                        // Not while LilyPond is at work on it: the PDF would land beside nothing.
+                        ArmedMenuRow(stringResource(R.string.menu_delete), stringResource(R.string.menu_delete_armed), enabled = !busy) {
+                            menu = false
+                            delete()
                         }
                     }
                 }
