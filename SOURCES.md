@@ -8,7 +8,7 @@ binary be available. It is here:
   https://github.com/termux/termux-packages at commit
   `47d0a637e92fb9ecdf78ac75f0b7c94b75340c96` (2026-11-08), are in
   `third_party/termux-packages/packages/<name>/` (`build.sh` and `*.patch`).
-  termux-packages' own licence: `third_party/termux-packages/LICENSE.md`.
+  termux-packages' own license: `third_party/termux-packages/LICENSE.md`.
 - The upstream source tarball of each package, with the sha256 the recipe checks, is below.
   The full hash is in each `build.sh` (`TERMUX_PKG_SHA256`).
 - Our own changes to the recipes (the install prefix) are in `build/`.
@@ -20,7 +20,7 @@ binary be available. It is here:
 python and ghostscript are left out: LilyPond's Cairo backend writes PDF and SVG without
 ghostscript, and python is only needed for convert-ly and the other helper scripts.
 
-| package | version | licence | upstream source | sha256 | patches |
+| package | version | license | upstream source | sha256 | patches |
 |---|---|---|---|---|---|
 | brotli | 1.2.1 | MIT | https://github.com/google/brotli/archive/refs/tags/v1.2.1.tar.gz | `98d35d11a78dc453…` | 0 |
 | fontconfig | 2.18.3 | MIT | https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.18.3/fontconfig-2.18.3.tar.gz | `9ae01e1d53acdef5…` | 1 |
