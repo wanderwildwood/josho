@@ -17,8 +17,8 @@ android {
         // Android 11: the Supernote Manta and Nomad. The Kompakt is API 31.
         minSdk = 30
         targetSdk = 31
-        versionCode = 11
-        versionName = "0.0.11"
+        versionCode = 12
+        versionName = "0.0.12"
     }
 
     // A real keystore in signing/ signs every build type when it is present, so the
