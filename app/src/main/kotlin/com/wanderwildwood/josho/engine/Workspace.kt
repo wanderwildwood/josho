@@ -68,11 +68,37 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
 
     override fun create(name: String, text: String): Doc? {
         val rootId = DocumentsContract.getTreeDocumentId(tree)
-        val parent = DocumentsContract.buildDocumentUriUsingTree(tree, rootId)
+        return createIn(DocumentsContract.buildDocumentUriUsingTree(tree, rootId), "", name, text)
+    }
+
+    /** A new file in the folder [parent], whose path under the chosen folder is [prefix] ("" or "parts/"). */
+    private fun createIn(parent: Uri, prefix: String, name: String, text: String): Doc? {
         val uri = DocumentsContract.createDocument(resolver, parent, "text/x-lilypond", name) ?: return null
         val real = query(uri).firstOrNull()?.name ?: name
-        return Doc(uri.toString(), real, real, parent.toString(), 0).also { write(it, text) }
+        return Doc(uri.toString(), prefix + real, real, parent.toString(), 0).also { write(it, text) }
     }
+
+    override fun createBeside(score: Doc, name: String, text: String): Doc? =
+        createIn(Uri.parse(score.parent), score.path.removeSuffix(score.name), name, text)
+
+    /** The one folder [score] is in, asked for by itself: quicker than walking the whole tree. */
+    override fun beside(score: Doc): List<Doc> {
+        val parent = Uri.parse(score.parent)
+        val prefix = score.path.removeSuffix(score.name)
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(parent))
+        return resolver.query(children, COLUMNS, null, null, null)?.use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    val name = c.getString(1) ?: continue
+                    if (c.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR) continue
+                    val uri = DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0))
+                    add(Doc(uri.toString(), prefix + name, name, score.parent, if (c.isNull(3)) 0L else c.getLong(3)))
+                }
+            }
+        } ?: emptyList()
+    }
+
+    override fun delete(doc: Doc): Boolean = DocumentsContract.deleteDocument(resolver, Uri.parse(doc.id))
 
     /**
      * Copies the folder's LilyPond files into [work] (cleared first) and returns where [score]

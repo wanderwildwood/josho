@@ -17,6 +17,12 @@ interface Folder {
     fun mirror(score: Doc): File
     /** Writes [file] beside [score], replacing a file of the same name. */
     fun putBeside(score: Doc, file: File, mime: String)
+    /** The files in the same folder as [score], itself among them; not those in folders under it. */
+    fun beside(score: Doc): List<Doc>
+    /** A new file [name] holding [text], in the same folder as [score]. */
+    fun createBeside(score: Doc, name: String, text: String): Doc?
+    /** Deletes [doc]; false when it could not be. */
+    fun delete(doc: Doc): Boolean
 }
 
 /** What LilyPond may \include: scores, include files, Scheme, plain text; nothing large. */
@@ -30,15 +36,19 @@ fun isSource(doc: Doc): Boolean =
  * A folder inside the app (files/scratch), for trying Engraver before choosing a folder of one's
  * own: it holds the sample. LilyPond compiles in place here, so nothing needs copying.
  */
-class LocalFolder(context: Context) : Folder {
-    private val dir = File(context.filesDir, "scratch").apply { mkdirs() }
+class LocalFolder(private val dir: File) : Folder {
+    constructor(context: Context) : this(File(context.filesDir, "scratch"))
+
+    init { dir.mkdirs() }
+
+    private fun doc(f: File) = Doc(f.path, f.name, f.name, dir.path, f.length())
 
     override fun title(): String = "Sample"
 
     override fun scores(): List<Doc> = dir.listFiles().orEmpty()
         .filter { it.isFile && it.name.endsWith(".ly") }
         .sortedBy { it.name.lowercase() }
-        .map { Doc(it.path, it.name, it.name, dir.path, it.length()) }
+        .map(::doc)
 
     override fun read(doc: Doc): String = File(doc.id).readText()
 
@@ -47,7 +57,7 @@ class LocalFolder(context: Context) : Folder {
     override fun create(name: String, text: String): Doc? {
         val f = File(dir, name)
         f.writeText(text)
-        return Doc(f.path, f.name, f.name, dir.path, f.length())
+        return doc(f)
     }
 
     override fun mirror(score: Doc): File = File(score.id)
@@ -56,4 +66,10 @@ class LocalFolder(context: Context) : Folder {
         val target = File(File(score.id).parentFile, file.name)
         if (target.canonicalPath != file.canonicalPath) file.copyTo(target, overwrite = true)
     }
+
+    override fun beside(score: Doc): List<Doc> = dir.listFiles().orEmpty().filter { it.isFile }.map(::doc)
+
+    override fun createBeside(score: Doc, name: String, text: String): Doc? = create(name, text)
+
+    override fun delete(doc: Doc): Boolean = File(doc.id).delete()
 }
