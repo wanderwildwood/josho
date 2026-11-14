@@ -6,6 +6,8 @@
 
     <!-- The About's links open in a browser, and its contact row in an email app. -->
     <queries>
+        <!-- Home, whose dark mode switch this app follows when Home is installed. -->
+        <package android:name="com.wanderwildwood.iori" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
@@ -37,6 +39,12 @@
 
         <!-- No fixed orientation: the Supernotes turn, and the layout follows (side by side when
              600 dp across). The Kompakt never turns by itself, so it stays portrait. -->
+        <!-- Starts dark mode before the first screen is drawn. Holds no data. -->
+        <provider
+            android:name="com.wanderwildwood.josho.ui.DarkModeInit"
+            android:authorities="${applicationId}.darkmodeinit"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
