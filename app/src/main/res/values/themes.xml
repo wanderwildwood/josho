@@ -5,5 +5,7 @@
         <item name="android:statusBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">true</item>
 
+        <!-- No start-up window: in dark mode it would flash white before the first frame. -->
+        <item name="android:windowDisablePreview">true</item>
     </style>
 </resources>
