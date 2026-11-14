@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mudita.mmd.components.text.TextMMD
@@ -90,6 +91,19 @@ fun SettingsScreen(
                         compact = true,
                     )
                     TextMMD(text = stringResource(R.string.settings_fold_bars_note), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            item {
+                val context = LocalContext.current
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextMMD(text = stringResource(R.string.settings_dark), style = MaterialTheme.typography.bodyLarge)
+                    HouseChoiceRow(
+                        options = listOf(stringResource(R.string.settings_dark_on), stringResource(R.string.settings_dark_off)),
+                        selected = if (DarkMode.on) 0 else 1,
+                        onSelect = { DarkMode.set(context, it == 0) },
+                        compact = true,
+                    )
+                    TextMMD(text = stringResource(R.string.settings_dark_note), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
