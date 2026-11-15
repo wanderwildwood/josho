@@ -94,6 +94,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 
 private enum class Pane { Source, Score, Log }
 
@@ -355,7 +359,7 @@ fun EditorScreen(
             val shown = if (wide && pane == Pane.Score) Pane.Source else pane
             val statusText = status.ifEmpty { if ((text?.text ?: savedText) != savedText) stringResource(R.string.unsaved) else "" }
             val scoreButton: @Composable () -> Unit = {
-                if (wide) HouseButton(stringResource(R.string.score_button), { scoreShown = !scoreShown }, on = scoreShown, compact = true)
+                if (wide) HouseButton(stringResource(R.string.score_button), { scoreShown = !scoreShown }, Modifier.semantics { role = Role.Switch; toggleableState = ToggleableState(scoreShown) }, on = scoreShown, compact = true)
             }
             Column(keys.fillMaxSize()) {
                 if (folded) {
