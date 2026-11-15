@@ -36,6 +36,8 @@ import com.wanderwildwood.josho.R
 import com.wanderwildwood.josho.engine.NameProblem
 import com.wanderwildwood.josho.engine.nameProblem
 import com.wanderwildwood.josho.engine.scoreName
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 /**
  * A short menu of things to do, dropped from what it sits beside in a Box: white, a thin black
@@ -105,7 +107,6 @@ fun ScoreNameDialog(
         mutableStateOf(TextFieldValue(initial, TextRange(0, initial.substringBeforeLast('.').length)))
     }
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     val problem = nameProblem(value.text, taken)
     val commit: () -> Unit = {
         if (problem == null) {
@@ -115,6 +116,15 @@ fun ScoreNameDialog(
     }
     EInkDialog(onDismiss = onDismiss) {
         TextMMD(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        // The field is what the dialog is for: it takes the focus as it opens and the keyboard
+        // comes up. Asked from inside the dialog, a frame after it is drawn: the field lives in
+        // the dialog's own window, which a request from the screen beneath does not reach.
+        val keyboardNow = LocalSoftwareKeyboardController.current
+        LaunchedEffect(Unit) {
+            withFrameNanos { }
+            runCatching { focus.requestFocus() }
+            keyboardNow?.show()
+        }
         Spacer(Modifier.height(14.dp))
         TextFieldMMD(
             value = value,
