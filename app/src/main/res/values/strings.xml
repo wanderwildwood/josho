@@ -95,9 +95,9 @@
     <string name="about_title">Engraver %1$s</string>
     <string name="about_what">Write music in LilyPond and engrave it here, with no server: LilyPond itself runs on the device. The PDF is saved beside the score.</string>
     <string name="about_privacy_title">Privacy</string>
-    <string name="about_privacy">Everything stays on this device. The app has no internet access, so nothing is sent anywhere, and nothing is collected about you. It reads and writes only the folder you choose, and keeps a working copy of its LilyPond files inside the app while it compiles. There are no ads, no analytics and no tracking. Pressing the donation or website line opens your browser.</string>
+    <string name="about_privacy">Everything stays on this device. The app has no internet access, so nothing is sent anywhere, and nothing is collected about you. It reads and writes only the folder you choose, and keeps a working copy of its LilyPond files inside the app while it compiles. There are no ads, no analytics and no tracking. Pressing the website line opens your browser. \"Feed the llamas\" in About opens a donation page (square.link) in your browser, only when you press it. The app sends nothing there; if you give, the payment is handled on that page by Square, not by this app.</string>
     <string name="about_terms_title">Terms</string>
-    <string name="about_terms">This app is free software under the GNU General Public License v3. It comes with no warranty: use it at your own risk.</string>
+    <string name="about_terms">This app is free software under the GNU General Public License v3. It comes with no warranty: use it at your own risk. A donation through \"Feed the llamas\" is voluntary and unlocks nothing: the app is the same with or without one.</string>
     <string name="about_feed_the_llamas">Feed the llamas</string>
     <string name="about_no_browser_address">No browser is installed. The address is %1$s.</string>
     <string name="about_close">Close</string>
