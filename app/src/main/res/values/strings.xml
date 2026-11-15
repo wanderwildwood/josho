@@ -46,6 +46,7 @@
     <string name="copy_title">Copy %1$s</string>
     <string name="name_save">Save</string>
     <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
     <string name="name_empty">Give it a name.</string>
     <string name="name_taken">There is already a score with that name.</string>
     <string name="name_unusable">A name cannot have a slash in it.</string>
@@ -85,6 +86,8 @@
     <string name="cd_score_full">Open the score on the whole screen</string>
     <string name="play">Play</string>
     <string name="stop">Stop</string>
+    <!-- The score's sound would not play: no working audio output, or the phone could not read the MIDI file -->
+    <string name="play_failed">The sound could not be played.</string>
     <string name="no_midi">No sound: add \\midi { } inside \\score to hear it.</string>
 
     <string name="cd_back">Back</string>

@@ -2,7 +2,6 @@ package com.wanderwildwood.josho.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
@@ -75,6 +74,8 @@ fun EngraverApp(
     var reload by remember { mutableIntStateOf(0) }
     // A score on the files page being copied: itself, and the names already in its folder.
     var copying by remember { mutableStateOf<Pair<Doc, List<String>>?>(null) }
+    /** A copy or delete that did not work, said until it is pressed away. */
+    var trouble by remember { mutableStateOf<Int?>(null) }
     val sample = remember { context.assets.open("sample.ly").bufferedReader().readText() }
     // A new score starts from the least LilyPond needs: a header, one note, layout and MIDI.
     val blank = remember { context.assets.open("new.ly").bufferedReader().readText() }
@@ -110,6 +111,7 @@ fun EngraverApp(
     }
 
     if (about) AboutDialog(onDismiss = { about = false })
+    trouble?.let { TroubleDialog(stringResource(it)) { trouble = null } }
 
     copying?.let { (doc, taken) ->
         ScoreNameDialog(
@@ -120,7 +122,7 @@ fun EngraverApp(
             onDone = { name ->
                 scope.launch {
                     val copy = withContext(Dispatchers.IO) { runCatching { copyScore(folder, doc, name) }.getOrNull() }
-                    if (copy == null) Toast.makeText(context, R.string.copy_failed, Toast.LENGTH_SHORT).show()
+                    if (copy == null) trouble = R.string.copy_failed
                     reload++
                 }
             },
@@ -153,7 +155,7 @@ fun EngraverApp(
             onDelete = { doc ->
                 scope.launch {
                     val gone = withContext(Dispatchers.IO) { runCatching { deleteScore(folder, doc) }.getOrDefault(false) }
-                    if (!gone) Toast.makeText(context, R.string.delete_failed, Toast.LENGTH_SHORT).show()
+                    if (!gone) trouble = R.string.delete_failed
                     if (prefs.lastScore == doc.path) prefs.lastScore = null
                     if (open?.id == doc.id) open = null
                     reload++

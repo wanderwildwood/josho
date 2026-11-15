@@ -628,6 +628,9 @@ private fun ScorePane(pdf: File?, stamp: Long, page: Int, onPage: (Int) -> Unit,
 @Composable
 private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (Int) -> Unit, midi: File?, onClose: () -> Unit) {
     var player by remember { mutableStateOf<MediaPlayer?>(null) }
+    // A sound that would not play is said beside Play until Play is pressed again: Play going
+    // back to Play with nothing heard and nothing said reads as a missed press.
+    var playFailed by remember(midi) { mutableStateOf(false) }
     // The volume keys turn the media volume here, as in a music player, before Play as well.
     val activity = LocalContext.current as? android.app.Activity
     DisposableEffect(activity) {
@@ -656,6 +659,7 @@ private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (
                 if (midi != null) {
                     val playing = player != null
                     HouseButton(stringResource(if (playing) R.string.stop else R.string.play), {
+                        playFailed = false
                         if (playing) stop() else player = runCatching {
                             MediaPlayer().apply {
                                 setAudioAttributes(
@@ -667,11 +671,18 @@ private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (
                                 setDataSource(midi.path)
                                 setOnPreparedListener { if (player === it) it.start() }
                                 setOnCompletionListener { if (player === it) stop() }
-                                setOnErrorListener { mp, what, extra -> Log.e(TAG, "play error $what/$extra"); if (player === mp) stop(); true }
+                                setOnErrorListener { mp, what, extra ->
+                                    Log.e(TAG, "play error $what/$extra")
+                                    if (player === mp) { stop(); playFailed = true }
+                                    true
+                                }
                                 prepareAsync()
                             }
-                        }.onFailure { Log.e(TAG, "play failed", it) }.getOrNull()
+                        }.onFailure { Log.e(TAG, "play failed", it); playFailed = true }.getOrNull()
                     }, on = true, compact = true)
+                    if (playFailed) {
+                        TextMMD(text = stringResource(R.string.play_failed), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                    }
                 } else {
                     TextMMD(text = stringResource(R.string.no_midi), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
                 }

@@ -161,3 +161,16 @@ fun ScoreNameDialog(
         }
     }
 }
+
+/**
+ * Something that did not work, said until it is pressed away. It was a toast, which on this
+ * panel could be gone before it had been read.
+ */
+@Composable
+fun TroubleDialog(message: String, onDismiss: () -> Unit) {
+    EInkDialog(onDismiss = onDismiss) {
+        TextMMD(text = message, style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(18.dp))
+        HouseButton(stringResource(R.string.ok), onDismiss, Modifier.fillMaxWidth(), on = true)
+    }
+}
