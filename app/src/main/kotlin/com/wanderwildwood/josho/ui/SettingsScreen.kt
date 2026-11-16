@@ -103,7 +103,6 @@ fun SettingsScreen(
                         onSelect = { DarkMode.set(context, it == 0) },
                         compact = true,
                     )
-                    TextMMD(text = stringResource(R.string.settings_dark_note), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
