@@ -1,5 +1,6 @@
 package com.wanderwildwood.josho
 
+import com.wanderwildwood.josho.ui.DarkSelection
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -66,14 +67,14 @@ class MainActivity : ComponentActivity() {
             // A steady cursor: a blinking one repaints the panel twice a second for as long as
             // the editor has focus.
             CompositionLocalProvider(LocalCursorBlinkEnabled provides false) {
-                ThemeMMD(colorScheme = monochrome, typography = houseTypography) {
+                ThemeMMD(colorScheme = monochrome, typography = houseTypography) { DarkSelection {
                     EngraverApp(
                         autoCompile = autoCompile,
                         autoCompileScheme = autoCompileScheme,
                         onTurn = ::turn,
                         layout = if (BuildConfig.DEBUG) intent.getStringExtra("layout") else null,
                     )
-                }
+                } }
             }
         }
     }
