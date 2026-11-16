@@ -54,8 +54,10 @@ fun HouseMenu(expanded: Boolean, onDismiss: () -> Unit, content: @Composable Col
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-        content = content,
-    )
+    ) {
+        DarkWindow()
+        content()
+    }
 }
 
 /** One row of a [HouseMenu]; all but the [first] draw the rule above them. Grayed when not [enabled]. */
