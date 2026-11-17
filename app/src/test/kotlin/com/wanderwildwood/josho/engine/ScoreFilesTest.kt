@@ -54,6 +54,7 @@ class ScoreFilesTest {
         assertEquals(NameProblem.Unusable, nameProblem("../song", emptyList()))
         assertEquals(NameProblem.Unusable, nameProblem("parts\\song", emptyList()))
         assertEquals(NameProblem.Unusable, nameProblem("so\nng", emptyList()))
+        assertEquals(NameProblem.Unusable, nameProblem("-song", emptyList()))
     }
 
     @Test fun theNextFreeNameCountsUp() {

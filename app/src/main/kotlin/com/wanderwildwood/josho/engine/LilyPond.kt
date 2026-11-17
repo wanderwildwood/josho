@@ -1,6 +1,7 @@
 package com.wanderwildwood.josho.engine
 
 import android.content.Context
+import com.wanderwildwood.josho.R
 import android.os.SystemClock
 import android.system.Os
 import java.io.File
@@ -100,6 +101,7 @@ class LilyPond(private val context: Context) {
         return listOf("-dbackend=cairo", "--pdf", "-dno-point-and-click", "-dinclude-settings=${settings.path}")
     }
     private var serverOut: java.io.BufferedReader? = null
+    @Volatile private var serverTimedOut = false
     private var serverRuns = 0
 
     /** Compiles [name] inside [dir] (where its includes are too); output lands beside it. */
@@ -112,9 +114,12 @@ class LilyPond(private val context: Context) {
         val t0 = SystemClock.elapsedRealtime()
         // Filling the Scheme cache (debug builds) wants a fresh process; so does a server that
         // has done its share, so memory from many scores never piles up.
+        serverTimedOut = false
         val kept = if (autoCompile) null else runCatching { viaServer(dir, name) }
             .onFailure { stop() }.getOrNull()
-        val (exit, log) = kept ?: oneShot(dir, name, autoCompile)
+        // A score that ran past the limit would only run past it again on its own.
+        val (exit, log) = kept
+            ?: if (serverTimedOut) 1 to context.getString(R.string.compile_too_long) else oneShot(dir, name, autoCompile)
         return Result(
             exit, SystemClock.elapsedRealtime() - t0, log,
             pdf.takeIf { it.isFile && it.length() > 0 },
@@ -159,7 +164,7 @@ class LilyPond(private val context: Context) {
         // A score that hangs LilyPond must not hang the editor: past the limit the process goes,
         // its output ends, and the compile below falls back to a one-shot run that says why.
         val watchdog = Thread {
-            try { Thread.sleep(SERVER_LIMIT_MS); p.destroy() } catch (_: InterruptedException) {}
+            try { Thread.sleep(SERVER_LIMIT_MS); serverTimedOut = true; p.destroy() } catch (_: InterruptedException) {}
         }.apply { isDaemon = true; start() }
         try {
             val log = StringBuilder()
@@ -176,10 +181,23 @@ class LilyPond(private val context: Context) {
     }
 
     private fun oneShot(dir: File, name: String, autoCompile: Boolean): Pair<Int, String> {
-        val pb = processBuilder(dir, listOf(exe.path) + options() + listOf(name), autoCompile)
+        // "./": a file name is never taken for an option, whatever it begins with.
+        val pb = processBuilder(dir, listOf(exe.path) + options() + listOf("./$name"), autoCompile)
         val p = pb.start()
-        val log = p.inputStream.bufferedReader().readText()
-        return p.waitFor() to log
+        // The same limit as the kept LilyPond's, so a score that hangs it cannot hold every
+        // later compile behind it. The output is read beside the wait.
+        val log = StringBuilder()
+        val reader = Thread {
+            runCatching { p.inputStream.bufferedReader().forEachLine { synchronized(log) { log.append(it).append('\n') } } }
+        }.apply { isDaemon = true; start() }
+        val limit = if (autoCompile) AUTO_COMPILE_LIMIT_MS else SERVER_LIMIT_MS
+        if (!p.waitFor(limit, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+            p.destroyForcibly()
+            reader.join(2_000)
+            return 1 to synchronized(log) { log.toString() } + context.getString(R.string.compile_too_long)
+        }
+        reader.join(5_000)
+        return p.exitValue() to synchronized(log) { log.toString() }
     }
 
     private fun processBuilder(dir: File, command: List<String>, autoCompile: Boolean): ProcessBuilder {
@@ -210,8 +228,12 @@ class LilyPond(private val context: Context) {
         /** The paper for scores that name none. */
         private const val PAPER = "a6"
         /** Scores per kept LilyPond before a fresh one. */
+        /** Held by a compile from setting up to its PDF beside the score; there is one work folder. */
+        val workLock = Any()
         private const val SERVER_RUNS = 25
         private const val SERVER_LIMIT_MS = 120_000L
+        /** Filling the Scheme cache (debug builds only) takes far longer than a compile. */
+        private const val AUTO_COMPILE_LIMIT_MS = 30 * 60_000L
 
         /**
          * Run by `-e` before LilyPond would look at its files, and never returns: the body of

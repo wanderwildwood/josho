@@ -21,6 +21,8 @@
     <string name="compiled_in">Compiled in %1$s s</string>
     <string name="compiled_with_warnings">Compiled in %1$s s, with warnings. See Log.</string>
     <string name="compile_failed">LilyPond stopped with errors. See Log.</string>
+    <!-- Added to the log when a compile ran past its two-minute limit and was stopped -->
+    <string name="compile_too_long">LilyPond took longer than two minutes and was stopped.</string>
     <string name="compile_could_not_start">LilyPond could not start: %1$s</string>
     <string name="saved_pdf">%1$s saved beside the score.</string>
     <string name="no_score_yet">Press Compile to engrave the score.</string>
@@ -49,7 +51,7 @@
     <string name="ok">OK</string>
     <string name="name_empty">Give it a name.</string>
     <string name="name_taken">There is already a score with that name.</string>
-    <string name="name_unusable">A name cannot have a slash in it.</string>
+    <string name="name_unusable">A name cannot have a slash in it, or begin with a dash.</string>
     <string name="save_as_failed">The copy could not be saved.</string>
     <string name="copy_failed">The copy could not be made.</string>
     <string name="delete_failed">The score could not be deleted.</string>

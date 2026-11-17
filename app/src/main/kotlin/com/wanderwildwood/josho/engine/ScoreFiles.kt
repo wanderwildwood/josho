@@ -19,7 +19,8 @@ fun nameProblem(typed: String, taken: Collection<String>): NameProblem? {
     val name = scoreName(typed)
     return when {
         name.dropLast(LY.length).isBlank() -> NameProblem.Empty
-        name.any { it == '/' || it == '\\' || it.code < 32 } -> NameProblem.Unusable
+        // A leading dash would read as one of LilyPond's options on its command line.
+        name.any { it == '/' || it == '\\' || it.code < 32 } || name.startsWith("-") -> NameProblem.Unusable
         taken.any { it.equals(name, ignoreCase = true) } -> NameProblem.Taken
         else -> null
     }
