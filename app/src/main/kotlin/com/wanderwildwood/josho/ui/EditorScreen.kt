@@ -164,10 +164,19 @@ fun EditorScreen(
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { lily.warmUp() } }
 
     LaunchedEffect(doc.id) {
-        val read = withContext(Dispatchers.IO) { runCatching { folder.read(doc) }.getOrDefault("") }
-        savedText = read
-        history.reset(EditHistory.Snapshot(read))
-        text = TextFieldValue(read)
+        // A score that could not be read is not opened as an empty one: typing into that and
+        // saving would put an empty score over the real one. The text stays away, and with it
+        // Save and Compile.
+        withContext(Dispatchers.IO) { runCatching { folder.read(doc) } }
+            .onSuccess { read ->
+                savedText = read
+                history.reset(EditHistory.Snapshot(read))
+                text = TextFieldValue(read)
+            }
+            .onFailure {
+                Log.w(TAG, "could not read the score: ${it.javaClass.simpleName}")
+                status = context.getString(R.string.read_failed)
+            }
     }
 
     LaunchedEffect(doc.id, compiles) {
@@ -184,10 +193,42 @@ fun EditorScreen(
         if (step != null) text = TextFieldValue(step.text, TextRange(step.start, step.end))
     }
 
-    fun save() {
-        val t = text?.text ?: return
-        if (t == savedText) return
-        runCatching { folder.write(doc, t) }.onSuccess { savedText = t }
+    /** True when what is typed is in the folder. */
+    fun save(): Boolean {
+        val t = text?.text ?: return true
+        if (t == savedText) return true
+        return runCatching { folder.write(doc, t) }
+            .onSuccess { savedText = t }
+            .onFailure {
+                Log.w(TAG, "could not save the score: ${it.javaClass.simpleName}")
+                status = context.getString(R.string.save_failed)
+            }
+            .isSuccess
+    }
+
+    // Leaving with a save that failed: the first Back stays and says so; a second one leaves.
+    var leaveUnsaved by remember(doc.id) { mutableStateOf(false) }
+    fun saveAndLeave() {
+        if (save() || leaveUnsaved) onBack() else leaveUnsaved = true
+    }
+
+    // Out of sight (another app, the screen off), what is typed is saved, so a phone that then
+    // ends the app does not take it along.
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, doc.id) {
+        val watch = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
+                val t = text?.text
+                if (t != null && t != savedText) {
+                    scope.launch {
+                        val ok = withContext(Dispatchers.IO) { runCatching { folder.write(doc, t) }.isSuccess }
+                        if (ok) savedText = t
+                    }
+                }
+            }
+        }
+        lifecycle.addObserver(watch)
+        onDispose { lifecycle.removeObserver(watch) }
     }
 
     fun compile(wide: Boolean) {
@@ -196,23 +237,30 @@ fun EditorScreen(
         busy = true
         scope.launch {
             status = context.getString(if (lily.isReady()) R.string.compiling else R.string.setting_up)
+            var written = false
             val outcome = withContext(Dispatchers.IO) {
                 runCatching {
                     if (t != savedText) folder.write(doc, t)
-                    val setUp = lily.prepare()
-                    if (setUp > 0) Log.i(TAG, "set up in $setUp ms")
-                    val source = folder.mirror(doc)
-                    val result = lily.compile(source.parentFile!!, source.name, autoCompileScheme)
-                    result.pdf?.let { folder.putBeside(doc, it, "application/pdf") }
-                    result.midi?.let { folder.putBeside(doc, it, "audio/midi") }
+                    written = true
+                    // One compile at a time, from setting up to the PDF beside the score: a
+                    // second editor's mirror would otherwise empty the work folder under it.
+                    val result = synchronized(LilyPond.workLock) {
+                        val setUp = lily.prepare()
+                        if (setUp > 0) Log.i(TAG, "set up in $setUp ms")
+                        val source = folder.mirror(doc)
+                        lily.compile(source.parentFile!!, source.name, autoCompileScheme).also { result ->
+                            result.pdf?.let { folder.putBeside(doc, it, "application/pdf") }
+                            result.midi?.let { folder.putBeside(doc, it, "audio/midi") }
+                        }
+                    }
                     Log.i(TAG, "compile: exit ${result.exit} in ${result.millis} ms; pdf ${result.pdf?.length() ?: "missing"}")
                     result
                 }
             }
             busy = false
             compiles++
-            // Written before compiling, whatever came of it after.
-            if (outcome.isSuccess || outcome.exceptionOrNull() !is java.io.IOException) savedText = t
+            // Written before compiling, whatever came of it after; not when the write itself failed.
+            if (written) savedText = t
             outcome.onFailure {
                 Log.e(TAG, "compile failed", it)
                 status = context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
@@ -226,7 +274,12 @@ fun EditorScreen(
                     warned -> context.getString(R.string.compiled_with_warnings, seconds)
                     else -> context.getString(R.string.compiled_in, seconds)
                 }
-                if (r.pdf != null) { pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0; scoreShown = true; midi = r.midi }
+                if (r.pdf != null) {
+                    pdf = r.pdf; pdfStamp = r.pdf.lastModified(); page = 0; scoreShown = true; midi = r.midi
+                } else {
+                    // The last score's files went before this compile: nothing is left to show.
+                    pdf = null; midi = null
+                }
                 pane = when {
                     r.exit != 0 || r.pdf == null -> Pane.Log
                     wide -> Pane.Source
@@ -285,12 +338,12 @@ fun EditorScreen(
     }
 
     // The system Back leaves the way the bar's arrow does: what was typed is saved first.
-    BackHandler { save(); onBack() }
+    BackHandler { saveAndLeave() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            if (!folded) Bar(doc.name, { save(); onBack() }, null, null) {
+            if (!folded) Bar(doc.name, { saveAndLeave() }, null, null) {
                 Box {
                     BarButton(Icons.More, stringResource(R.string.cd_more)) { menu = true }
                     HouseMenu(menu, { menu = false }) {
