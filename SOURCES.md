@@ -29,10 +29,10 @@ ghostscript, and python is only needed for convert-ly and the other helper scrip
 | glib | 2.90.1 | LGPL-2.1 | https://download.gnome.org/sources/glib/2.90/glib-2.90.1.tar.xz | `93c941aa17d5eb1d…` | 16 |
 | guile | 3.0.11 | LGPL-3.0 | https://mirrors.kernel.org/gnu/guile/guile-3.0.11.tar.gz | `3c9c16972a73bb79…` | 0 |
 | harfbuzz | 15.1.0 | MIT | https://github.com/harfbuzz/harfbuzz/archive/refs/tags/15.1.0.tar.gz | `5c057929413b8664…` | 1 |
-| libandroid-execinfo | 0.1 | BSD 2-Clause |  (array or computed; see build.sh) | `…` | 0 |
+| libandroid-execinfo | 0.1 | BSD 2-Clause | none: the source is in the recipe folder | — | 0 |
 | libandroid-shmem | 0.7 | BSD 3-Clause | https://github.com/termux/libandroid-shmem/archive/refs/tags/v0.7.tar.gz | `1e5ff8459bc0a8c2…` | 0 |
-| libandroid-spawn | 0.3 | BSD 2-Clause |  (array or computed; see build.sh) | `…` | 0 |
-| libandroid-support | (29 | Apache-2.0, MIT | (https://github.com/termux/libandroid-support/archive/refs/tags/v${TERMUX_PKG_VERSION[0]}.tar.gz (array or computed; see build.sh) | `(8f74ce0f9cf70ec…` | 0 |
+| libandroid-spawn | 0.3 | BSD 2-Clause | none: the source is in the recipe folder | — | 0 |
+| libandroid-support | 29 | Apache-2.0, MIT | https://github.com/termux/libandroid-support/archive/refs/tags/v29.tar.gz | `8f74ce0f9cf70ec2…` | 0 |
 | libbz2 | 1.0.8 | BSD | https://fossies.org/linux/misc/bzip2-1.0.8.tar.xz | `47fd74b2ff83effa…` | 3 |
 | libc++ | 30 | NCSA | https://dl.google.com/android/repository/android-ndk-r30-linux.zip | `753611f410d002cf…` | 0 |
 | libcairo | 1.18.6 | LGPL-2.1 | https://gitlab.freedesktop.org/cairo/cairo/-/archive/1.18.6/cairo-1.18.6.tar.bz2 | `42b785e00ef97a68…` | 3 |
@@ -54,13 +54,12 @@ ghostscript, and python is only needed for convert-ly and the other helper scrip
 | libxft | 2.3.9 | HPND | https://xorg.freedesktop.org/releases/individual/lib/libXft-2.3.9.tar.xz | `60a25b78945ed693…` | 0 |
 | libxrender | 0.9.13 | MIT | https://xorg.freedesktop.org/releases/individual/lib/libXrender-0.9.13.tar.xz | `3fe88c609df6782e…` | 0 |
 | lilypond | 2.26.0 | GPL-3.0 | https://lilypond.org/download/sources/v2.26/lilypond-2.26.0.tar.gz | `bbe82dbeba7f7f99…` | 0 |
-| ncurses | (6.6.20260307+really6.5.20250830 | MIT | ("https://github.com/ThomasDickey/ncurses-snapshots/archive/${_SNAPSHOT_COMMIT}.tar.gz" (array or computed; see build.sh) | `(28cd102efe6a261…` | 3 |
+| ncurses | 6.6.20260307+really6.5.20250830 | MIT | https://github.com/ThomasDickey/ncurses-snapshots/archive/5f58399b2de47ed14bdfe3a0cb149293b27893d5.tar.gz | `28cd102efe6a2610…` | 3 |
 | pango | 1.58.2 | LGPL-2.0 | https://download.gnome.org/sources/pango/1.58/pango-1.58.2.tar.xz | `342385b6ca3b7c73…` | 2 |
 | pcre2 | 10.49 | BSD 3-Clause | https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.49/pcre2-10.49.tar.bz2 | `53c156e1ba416a20…` | 0 |
 | readline | 8.3.6 | GPL-3.0 | https://mirrors.kernel.org/gnu/readline/readline-8.3.tar.gz | `fe5383204467828c…` | 1 |
-| resolv-conf | 1.3 | Public Domain |  (array or computed; see build.sh) | `…` | 0 |
+| resolv-conf | 1.3 | Public Domain | none: the recipe writes the file itself | — | 0 |
 | tex-gyre | 2.501 | custom | https://www.gust.org.pl/projects/e-foundry/tex-gyre/whole/tg2_501otf.zip | `d7f8be5317bec4e6…` | 0 |
-| ttf-dejavu | 2.37 | MIT | https://downloads.sourceforge.net/project/dejavu/dejavu/2.37/dejavu-fonts-ttf-2.37.tar.bz2 | `fa9ca4d13871dd12…` | 0 |
 | xorg-util-macros | 1.20.2 | HPND, MIT | https://xorg.freedesktop.org/releases/individual/util/util-macros-1.20.2.tar.xz | `9ac269eba24f672d…` | 1 |
 | xorgproto | 2026.1 | MIT | https://xorg.freedesktop.org/archive/individual/proto/xorgproto-2026.1.tar.xz | `f9bfe4a9ed8c8ab9…` | 3 |
 | zlib | 1.4 | ZLIB | https://github.com/madler/zlib/releases/download/v1.4/zlib-1.4.tar.xz | `4f11c512053d7bab…` | 1 |
