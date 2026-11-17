@@ -26,12 +26,16 @@ Open in another app and Print hand one engraved PDF to the app or the printer yo
 you ask and not otherwise. What that app does with it is its own affair. Deleting a score in
 Engraver deletes the PDF and MIDI of the same name beside it.
 
-## The one address in the app
+## Links that leave the app
 
 The llama at the foot of the About opens `square.link/u/AGu8oT10` in whatever browser you
 have. That is a hand-off: this app does not fetch the page, and it learns nothing about
 whether you went there. The page is Square's, a separate company, and what it collects is
 covered by Square's own privacy policy.
+
+The About also has the author's website (wanderthe.dev), the contact address, which opens your
+mail app, and the app's source code on GitHub; the Licenses page links each library's website.
+Each is handed to your browser or mail app in the same way, only when you press it.
 
 <!-- shared-about privacy section -->
 ## Who we are
