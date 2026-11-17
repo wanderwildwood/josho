@@ -108,12 +108,20 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
     override fun mirror(score: Doc): File {
         work.deleteRecursively()
         work.mkdirs()
+        var room = MAX_MIRROR
         for (f in files()) {
             if (!isSource(f)) continue
             val out = File(work, f.path)
             if (!out.canonicalPath.startsWith(work.canonicalPath + File.separator)) continue
             out.parentFile?.mkdirs()
-            resolver.openInputStream(Uri.parse(f.id))?.use { input -> out.outputStream().use { input.copyTo(it) } }
+            // The folder's word for a size can be missing (it reads as 0), so the limit is kept
+            // while copying: a file past it, or past what is left of the whole, is left out.
+            val limit = minOf(MAX_SOURCE, room)
+            val copied = resolver.openInputStream(Uri.parse(f.id))?.use { input ->
+                out.outputStream().use { output -> copyAtMost(input, output, limit) }
+            } ?: 0L
+            if (copied > limit) out.delete() else room -= copied
+            if (room <= 0) break
         }
         return File(work, score.path)
     }
@@ -144,5 +152,21 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
             DocumentsContract.Document.COLUMN_SIZE,
         )
         private const val MAX_DEPTH = 4
+    }
+}
+
+/** Everything copied for one compile: far more than any score and its includes. */
+private const val MAX_MIRROR = 32L * 1024 * 1024
+
+/** Copies at most [limit] bytes; returns how many were read, which is past [limit] when there was more. */
+internal fun copyAtMost(input: java.io.InputStream, output: java.io.OutputStream, limit: Long): Long {
+    val buffer = ByteArray(64 * 1024)
+    var total = 0L
+    while (true) {
+        val n = input.read(buffer)
+        if (n < 0) return total
+        if (total + n > limit) return total + n
+        output.write(buffer, 0, n)
+        total += n
     }
 }

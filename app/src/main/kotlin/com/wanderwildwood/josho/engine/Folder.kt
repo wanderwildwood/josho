@@ -27,7 +27,7 @@ interface Folder {
 
 /** What LilyPond may \include: scores, include files, Scheme, plain text; nothing large. */
 val SOURCE_TYPES = setOf("ly", "ily", "lyi", "scm", "txt")
-private const val MAX_SOURCE = 2L * 1024 * 1024
+internal const val MAX_SOURCE = 2L * 1024 * 1024
 
 fun isSource(doc: Doc): Boolean =
     doc.name.substringAfterLast('.', "").lowercase() in SOURCE_TYPES && doc.size <= MAX_SOURCE
