@@ -262,7 +262,7 @@ fun EditorScreen(
             // Written before compiling, whatever came of it after; not when the write itself failed.
             if (written) savedText = t
             outcome.onFailure {
-                Log.e(TAG, "compile failed", it)
+                Log.e(TAG, "compile failed: ${it.javaClass.simpleName}")
                 status = context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
             }
             outcome.onSuccess { r ->
@@ -731,7 +731,7 @@ private fun FullScore(name: String, pdf: File, stamp: Long, page: Int, onPage: (
                                 }
                                 prepareAsync()
                             }
-                        }.onFailure { Log.e(TAG, "play failed", it); playFailed = true }.getOrNull()
+                        }.onFailure { Log.e(TAG, "play failed: ${it.javaClass.simpleName}"); playFailed = true }.getOrNull()
                     }, on = true, compact = true)
                     if (playFailed) {
                         TextMMD(text = stringResource(R.string.play_failed), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))

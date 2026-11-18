@@ -44,7 +44,7 @@ internal fun openElsewhere(context: Context, pdf: Doc): Boolean = try {
     true
 } catch (e: RuntimeException) {
     // ActivityNotFoundException with no PDF app; anything else is logged and answered the same.
-    Log.e(TAG, "open elsewhere failed", e)
+    Log.e(TAG, "open elsewhere failed: ${e.javaClass.simpleName}")
     false
 }
 
@@ -61,7 +61,7 @@ internal fun printPdf(context: Context, pdf: Doc, title: String): Boolean = try 
     printing.print(title, PdfPrint(context.contentResolver, addressOf(context, pdf), pdf.name), null)
     true
 } catch (e: RuntimeException) {
-    Log.e(TAG, "print failed", e)
+    Log.e(TAG, "print failed: ${e.javaClass.simpleName}")
     false
 }
 
@@ -105,7 +105,7 @@ private class PdfPrint(
                 if (cancellationSignal?.isCanceled == true) callback?.onWriteCancelled()
                 else callback?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
             } catch (e: Exception) {
-                Log.e(TAG, "print write failed", e)
+                Log.e(TAG, "print write failed: ${e.javaClass.simpleName}")
                 callback?.onWriteFailed(e.message)
             }
         }.start()
