@@ -84,6 +84,7 @@ import com.wanderwildwood.josho.engine.EditHistory
 import com.wanderwildwood.josho.engine.Folder
 import com.wanderwildwood.josho.engine.LilyPond
 import com.wanderwildwood.josho.engine.LogLine
+import com.wanderwildwood.josho.engine.TooLarge
 import com.wanderwildwood.josho.engine.copyScore
 import com.wanderwildwood.josho.engine.deleteScore
 import com.wanderwildwood.josho.engine.nextFreeName
@@ -175,7 +176,7 @@ fun EditorScreen(
             }
             .onFailure {
                 Log.w(TAG, "could not read the score: ${it.javaClass.simpleName}")
-                status = context.getString(R.string.read_failed)
+                status = context.getString(if (it is TooLarge) R.string.read_too_large else R.string.read_failed)
             }
     }
 
@@ -277,7 +278,8 @@ fun EditorScreen(
             if (written) saved(t)
             outcome.onFailure {
                 Log.e(TAG, "compile failed: ${it.javaClass.simpleName}")
-                status = context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
+                status = if (it is TooLarge) context.getString(R.string.compile_too_large)
+                else context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
             }
             outcome.onSuccess { r ->
                 log = parseLog(r.log)

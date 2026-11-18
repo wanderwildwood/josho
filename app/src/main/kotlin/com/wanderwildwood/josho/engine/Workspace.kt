@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import com.wanderwildwood.josho.R
 import java.io.File
 
 /**
@@ -59,8 +60,9 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
         return files().filter { it.name.endsWith(".ly") }.sortedBy { it.path.lowercase() }
     }
 
+    /** The score as text; one past [MAX_SOURCE] is not read into memory at all ([TooLarge]). */
     override fun read(doc: Doc): String =
-        resolver.openInputStream(Uri.parse(doc.id))!!.use { it.readBytes().toString(Charsets.UTF_8) }
+        resolver.openInputStream(Uri.parse(doc.id))!!.use { readAtMost(it) }
 
     override fun write(doc: Doc, text: String) {
         resolver.openOutputStream(Uri.parse(doc.id), "wt")!!.use { it.write(text.toByteArray(Charsets.UTF_8)) }
@@ -103,14 +105,20 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
     /**
      * Copies the folder's LilyPond files into [work] (cleared first) and returns where [score]
      * now is there. Only text LilyPond reads, and nothing large, so a folder of PDFs and
-     * recordings costs nothing.
+     * recordings costs nothing. The score goes first, so it is never what the limit leaves out;
+     * a score that cannot be copied is said so ([TooLarge], or not found) rather than compiled
+     * as a file that is not there.
      */
     override fun mirror(score: Doc): File {
         work.deleteRecursively()
         work.mkdirs()
+        val all = files()
+        val sources = all.filter { it.path == score.path } + all.filter { it.path != score.path }
         var room = MAX_MIRROR
-        for (f in files()) {
-            if (!isSource(f)) continue
+        var scoreCopied = false
+        for (f in sources) {
+            val isScore = f.path == score.path
+            if (!isScore && !isSource(f)) continue
             val out = File(work, f.path)
             if (!out.canonicalPath.startsWith(work.canonicalPath + File.separator)) continue
             out.parentFile?.mkdirs()
@@ -119,10 +127,17 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
             val limit = minOf(MAX_SOURCE, room)
             val copied = resolver.openInputStream(Uri.parse(f.id))?.use { input ->
                 out.outputStream().use { output -> copyAtMost(input, output, limit) }
-            } ?: 0L
-            if (copied > limit) out.delete() else room -= copied
+            } ?: continue
+            if (copied > limit) {
+                out.delete()
+                if (isScore) throw TooLarge()
+            } else {
+                room -= copied
+                if (isScore) scoreCopied = true
+            }
             if (room <= 0) break
         }
+        if (!scoreCopied) throw java.io.FileNotFoundException(context.getString(R.string.compile_score_missing))
         return File(work, score.path)
     }
 

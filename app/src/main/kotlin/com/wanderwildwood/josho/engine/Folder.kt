@@ -32,6 +32,16 @@ internal const val MAX_SOURCE = 2L * 1024 * 1024
 fun isSource(doc: Doc): Boolean =
     doc.name.substringAfterLast('.', "").lowercase() in SOURCE_TYPES && doc.size <= MAX_SOURCE
 
+/** A score past [MAX_SOURCE]: more than the editor opens or LilyPond is given. */
+class TooLarge : java.io.IOException("larger than $MAX_SOURCE bytes")
+
+/** All of [input] as text; past [limit] it is not read on, and [TooLarge] says why. */
+internal fun readAtMost(input: java.io.InputStream, limit: Long = MAX_SOURCE): String {
+    val out = java.io.ByteArrayOutputStream()
+    if (copyAtMost(input, out, limit) > limit) throw TooLarge()
+    return String(out.toByteArray(), Charsets.UTF_8)
+}
+
 /**
  * A folder inside the app (files/scratch), for trying Engraver before choosing a folder of one's
  * own: it holds the sample. LilyPond compiles in place here, so nothing needs copying.
@@ -50,7 +60,7 @@ class LocalFolder(private val dir: File) : Folder {
         .sortedBy { it.name.lowercase() }
         .map(::doc)
 
-    override fun read(doc: Doc): String = File(doc.id).readText()
+    override fun read(doc: Doc): String = File(doc.id).inputStream().use { readAtMost(it) }
 
     override fun write(doc: Doc, text: String) = File(doc.id).writeText(text)
 
