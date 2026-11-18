@@ -101,9 +101,18 @@ fun EngraverApp(
 
     val pick = rememberLauncherForActivityResult(FilesOpenTree()) { uri: Uri? ->
         if (uri != null) {
-            context.contentResolver.takePersistableUriPermission(
+            val resolver = context.contentResolver
+            resolver.takePersistableUriPermission(
                 uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
             )
+            // The app reaches one folder: the grant to any folder chosen before goes back.
+            resolver.persistedUriPermissions.filter { it.uri != uri }.forEach { old ->
+                runCatching {
+                    resolver.releasePersistableUriPermission(
+                        old.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                    )
+                }
+            }
             prefs.folder = uri
             prefs.lastScore = null
             folderUri = uri
