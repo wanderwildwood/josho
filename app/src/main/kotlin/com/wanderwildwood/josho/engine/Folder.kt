@@ -62,7 +62,17 @@ class LocalFolder(private val dir: File) : Folder {
 
     override fun read(doc: Doc): String = File(doc.id).inputStream().use { readAtMost(it) }
 
-    override fun write(doc: Doc, text: String) = File(doc.id).writeText(text)
+    /** Written beside the score first and then put in its place, so a write that fails leaves the score as it was. */
+    override fun write(doc: Doc, text: String) {
+        val target = File(doc.id)
+        val temp = File(target.parentFile, ".${target.name}.saving")
+        try {
+            temp.writeText(text)
+            if (!temp.renameTo(target)) throw java.io.IOException("could not replace the score")
+        } finally {
+            temp.delete()
+        }
+    }
 
     override fun create(name: String, text: String): Doc? {
         val f = File(dir, name)

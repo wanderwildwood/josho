@@ -29,4 +29,17 @@ class ReadAtMostTest {
             dir.deleteRecursively()
         }
     }
+
+    @Test fun theAppsOwnFolderReplacesAScoreWholeAndLeavesNothingBeside() {
+        val dir = java.nio.file.Files.createTempDirectory("josho-write").toFile()
+        try {
+            val folder = LocalFolder(dir)
+            val score = folder.create("song.ly", "{ c' }")!!
+            folder.write(score, "{ d' e' }")
+            assertEquals("{ d' e' }", folder.read(score))
+            assertEquals(listOf("song.ly"), dir.list()!!.toList())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
 }
