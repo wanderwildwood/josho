@@ -36,6 +36,7 @@ ghostscript, and python is only needed for convert-ly and the other helper scrip
 | libbz2 | 1.0.8 | BSD | https://fossies.org/linux/misc/bzip2-1.0.8.tar.xz | `47fd74b2ff83effa…` | 3 |
 | libc++ | 30 | NCSA | https://dl.google.com/android/repository/android-ndk-r30-linux.zip | `753611f410d002cf…` | 0 |
 | libcairo | 1.18.6 | LGPL-2.1 | https://gitlab.freedesktop.org/cairo/cairo/-/archive/1.18.6/cairo-1.18.6.tar.bz2 | `42b785e00ef97a68…` | 3 |
+| libcrypt | 0.2-6 | BSD 2-Clause | none: the source is in the recipe folder | — | 0 |
 | libexpat | 2.10.0 | MIT | https://github.com/libexpat/libexpat/releases/download/R_2_10_0/expat-2.10.0.tar.bz2 | `44e0139015f1c990…` | 0 |
 | libffi | 3.8.0 | MIT | https://github.com/libffi/libffi/releases/download/v3.8.0/libffi-3.8.0.tar.gz | `7da3e2d9a171eb0a…` | 0 |
 | libgc | 8.2.12 | MIT | https://github.com/bdwgc/bdwgc/releases/download/v8.2.12/gc-8.2.12.tar.gz | `42e5194ad06ab6ff…` | 0 |
@@ -55,6 +56,7 @@ ghostscript, and python is only needed for convert-ly and the other helper scrip
 | libxrender | 0.9.13 | MIT | https://xorg.freedesktop.org/releases/individual/lib/libXrender-0.9.13.tar.xz | `3fe88c609df6782e…` | 0 |
 | lilypond | 2.26.0 | GPL-3.0 | https://lilypond.org/download/sources/v2.26/lilypond-2.26.0.tar.gz | `bbe82dbeba7f7f99…` | 0 |
 | ncurses | 6.6.20260307+really6.5.20250830 | MIT | https://github.com/ThomasDickey/ncurses-snapshots/archive/5f58399b2de47ed14bdfe3a0cb149293b27893d5.tar.gz | `28cd102efe6a2610…` | 3 |
+| openssl | 3.6.5 | Apache-2.0 | https://github.com/openssl/openssl/releases/download/openssl-3.6.5/openssl-3.6.5.tar.gz | `a2157c2830efdec3…` | 2 |
 | pango | 1.58.2 | LGPL-2.0 | https://download.gnome.org/sources/pango/1.58/pango-1.58.2.tar.xz | `342385b6ca3b7c73…` | 2 |
 | pcre2 | 10.49 | BSD 3-Clause | https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.49/pcre2-10.49.tar.bz2 | `53c156e1ba416a20…` | 0 |
 | readline | 8.3.6 | GPL-3.0 | https://mirrors.kernel.org/gnu/readline/readline-8.3.tar.gz | `fe5383204467828c…` | 1 |
