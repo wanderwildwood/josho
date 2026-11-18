@@ -26,6 +26,12 @@ No permissions: nothing is asked of you, and there is no `INTERNET` permission, 
 open a network connection even by accident. The folder of scores is reached through the folder
 you pick and nothing else. `PRIVACY.md` has the evidence.
 
+LilyPond runs the Scheme a score carries, as LilyPond always does, so open scores you trust.
+What a score's Scheme could reach is this app's own storage, not the rest of the phone. LilyPond's
+own files are unpacked read-only and checked against what the app shipped before LilyPond is
+started, and after each score; a file changed or added there is unpacked again from the app
+before the next score runs.
+
 ## Building
 
 ```

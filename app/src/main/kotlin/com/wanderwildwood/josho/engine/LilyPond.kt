@@ -24,6 +24,13 @@ class LilyPond(private val context: Context) {
      */
     private val guileCache = File(context.filesDir, "guile-cache")
     private val stamp = File(prefix, ".josho-version")
+    private val seal = PrefixSeal(context.filesDir, File(context.filesDir, "prefix-sha256.txt"))
+
+    /**
+     * The prefix's files as they were last found whole (size and time of each), so a compile by
+     * the kept LilyPond can be followed by a quick look rather than a full check.
+     */
+    private var lastSeen: Map<String, Pair<Long, Long>>? = null
     private val exe = File(context.applicationInfo.nativeLibraryDir, "liblilypond_exe.so")
 
     /**
@@ -40,6 +47,10 @@ class LilyPond(private val context: Context) {
         if (isReady()) return 0
         val t0 = SystemClock.elapsedRealtime()
         val files = context.filesDir
+        stop()
+        lastSeen = null
+        seal.reset()
+        // Read-only files go with their folder; the folders themselves were left writable.
         prefix.deleteRecursively()
         guileCache.deleteRecursively()
         val abi = File(context.applicationInfo.nativeLibraryDir).name   // "arm64" or "x86_64"
@@ -50,7 +61,7 @@ class LilyPond(private val context: Context) {
                 if (!out.canonicalPath.startsWith(files.canonicalPath + File.separator)) continue
                 if (e.isDirectory) { out.mkdirs(); continue }
                 out.parentFile?.mkdirs()
-                out.outputStream().use { zip.copyTo(it) }
+                seal.take(zip, out)
             }
         }
         // Zip keeps no symlinks; the packer lists them as "link<TAB>target", relative to files/.
@@ -61,6 +72,7 @@ class LilyPond(private val context: Context) {
             f.parentFile?.mkdirs()
             f.delete()
             Os.symlink(target, f.path)
+            seal.link(f, target)
         }
         // Unzipping stamps every file with the time it was written, in no particular order, so
         // a Scheme source can look newer than its compiled .go. Guile then ignores the .go and
@@ -69,6 +81,8 @@ class LilyPond(private val context: Context) {
         for (dir in listOf(prefix, guileCache)) {
             dir.walkTopDown().filter { it.isFile && it.name.endsWith(".go") }.forEach { it.setLastModified(later) }
         }
+        // Read-only from here, and their hashes kept: see [ensureIntact].
+        seal.seal()
         stamp.writeText(version)
         return SystemClock.elapsedRealtime() - t0
     }
@@ -117,6 +131,13 @@ class LilyPond(private val context: Context) {
         serverTimedOut = false
         val kept = if (autoCompile) null else runCatching { viaServer(dir, name) }
             .onFailure { stop() }.getOrNull()
+        // After a score in the kept LilyPond, a quick look over the prefix: anything changed
+        // there and the kept LilyPond goes, so the next start checks it in full and unpacks it
+        // again. The score that changed it has run; none after it runs on what it wrote.
+        if (kept != null && lastSeen != snapshot()) {
+            stop()
+            lastSeen = null
+        }
         // A score that ran past the limit would only run past it again on its own.
         val (exit, log) = kept
             ?: if (serverTimedOut) 1 to context.getString(R.string.compile_too_long) else oneShot(dir, name, autoCompile)
@@ -125,6 +146,42 @@ class LilyPond(private val context: Context) {
             pdf.takeIf { it.isFile && it.length() > 0 },
             midi.takeIf { it.isFile && it.length() > 0 },
         )
+    }
+
+    /**
+     * Before LilyPond is started: the prefix's files are hashed against what the APK shipped,
+     * and anything else found in it is a change too. A change means a score's Scheme wrote
+     * there, so the prefix is unpacked afresh before LilyPond runs. [autoCompile] (debug builds)
+     * fills guile-cache/ on purpose, so new files there are expected then.
+     */
+    private fun ensureIntact(autoCompile: Boolean) {
+        val watched = if (autoCompile) listOf(prefix) else listOf(prefix, guileCache)
+        if (isReady() && seal.check(watched, ignore = notSealed())) {
+            lastSeen = snapshot()
+            return
+        }
+        stamp.delete()
+        prepare()
+        lastSeen = snapshot()
+    }
+
+    /**
+     * What LilyPond writes for itself and is not sealed: the version stamp, and fontconfig's
+     * cache of the fonts, which it makes on its first run in the first folder it may write to
+     * (fonts.conf names usr/var/cache/fontconfig, then $XDG_CACHE_HOME/fontconfig).
+     */
+    private fun notSealed(): Set<File> =
+        setOf(stamp, File(prefix, "var/cache/fontconfig"), File(guileCache, "fontconfig"))
+
+    /** Size and time of every file under the prefix and the Scheme cache, fontconfig's cache apart. */
+    private fun snapshot(): Map<String, Pair<Long, Long>> {
+        val skip = notSealed().map { it.path }
+        return listOf(prefix, guileCache).flatMap { dir ->
+            dir.walkTopDown()
+                .onEnter { d -> skip.none { d.path == it } }
+                .filter { it.isFile && it.path !in skip }
+                .map { it.path to (it.length() to it.lastModified()) }.toList()
+        }.toMap()
     }
 
     /** Starts the kept LilyPond ahead of the first compile, so even that one is quick. */
@@ -143,6 +200,7 @@ class LilyPond(private val context: Context) {
     }
 
     private fun startServer() {
+        ensureIntact(autoCompile = false)
         val pb = processBuilder(
             context.cacheDir,
             listOf(exe.path) + options() + listOf("-e", SERVER_SCHEME, "-"),
@@ -181,6 +239,7 @@ class LilyPond(private val context: Context) {
     }
 
     private fun oneShot(dir: File, name: String, autoCompile: Boolean): Pair<Int, String> {
+        ensureIntact(autoCompile)
         // "./": a file name is never taken for an option, whatever it begins with.
         val pb = processBuilder(dir, listOf(exe.path) + options() + listOf("./$name"), autoCompile)
         val p = pb.start()
