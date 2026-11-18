@@ -189,24 +189,29 @@ fun EditorScreen(
     // later failed save on Back warns again before anything is left behind.
     var leaveUnsaved by remember(doc.id) { mutableStateOf(false) }
 
+    /** A warning about an earlier failed save no longer holds: the next Back tries to save again. */
+    fun dropSaveWarning() {
+        leaveUnsaved = false
+        if (status == context.getString(R.string.save_failed) || status == context.getString(R.string.save_failed_stay)) status = ""
+    }
+
     /** Every change to the source comes through here, so it can be taken back. */
     fun edit(v: TextFieldValue) {
         history.record(EditHistory.Snapshot(v.text, v.selection.start, v.selection.end), SystemClock.uptimeMillis())
-        if (v.text != text?.text) leaveUnsaved = false
+        if (v.text != text?.text) dropSaveWarning()
         text = v
     }
 
     fun restore(step: EditHistory.Snapshot?) {
         if (step == null) return
-        if (step.text != text?.text) leaveUnsaved = false
+        if (step.text != text?.text) dropSaveWarning()
         text = TextFieldValue(step.text, TextRange(step.start, step.end))
     }
 
-    /** [t] is in the folder now: a warning about an earlier failed save no longer holds. */
+    /** [t] is in the folder now. */
     fun saved(t: String) {
         savedText = t
-        leaveUnsaved = false
-        if (status == context.getString(R.string.save_failed) || status == context.getString(R.string.save_failed_stay)) status = ""
+        dropSaveWarning()
     }
 
     /** True when what is typed is in the folder. [leaving]: asked by Back, whose warning says a second Back leaves. */
