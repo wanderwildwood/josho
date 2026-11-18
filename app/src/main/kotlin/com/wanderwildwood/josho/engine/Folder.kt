@@ -32,6 +32,24 @@ internal const val MAX_SOURCE = 2L * 1024 * 1024
 fun isSource(doc: Doc): Boolean =
     doc.name.substringAfterLast('.', "").lowercase() in SOURCE_TYPES && doc.size <= MAX_SOURCE
 
+/** The copy a save leaves beside a score until the score itself holds the new text. */
+internal fun backupName(name: String): String = "$name.saving"
+
+/**
+ * Saves in three steps: the new text into a copy beside the score, then into the score, then the
+ * copy is dropped. A copy that cannot be made stops the save before the score is touched; a score
+ * that cannot be written keeps the copy. Only dropping the copy may fail quietly: by then the
+ * score holds the text, and a copy left over does no harm.
+ */
+internal fun saveWithBackup(writeBackup: () -> Unit, writeInPlace: () -> Unit, dropBackup: () -> Unit) {
+    writeBackup()
+    writeInPlace()
+    try {
+        dropBackup()
+    } catch (_: Exception) {
+    }
+}
+
 /** A score past [MAX_SOURCE]: more than the editor opens or LilyPond is given. */
 class TooLarge : java.io.IOException("larger than $MAX_SOURCE bytes")
 

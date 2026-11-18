@@ -64,8 +64,32 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
     override fun read(doc: Doc): String =
         resolver.openInputStream(Uri.parse(doc.id))!!.use { readAtMost(it) }
 
+    /**
+     * A folder from the picker cannot always rename one file over another, and writing in place
+     * empties the score first. So the text goes into "name.ly.saving" beside the score before the
+     * score is written, and that copy is deleted only once the score holds it. A write that fails
+     * leaves the copy there for the reader to open.
+     */
     override fun write(doc: Doc, text: String) {
-        resolver.openOutputStream(Uri.parse(doc.id), "wt")!!.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        var backup: Uri? = null
+        saveWithBackup(
+            writeBackup = {
+                val name = backupName(doc.name)
+                val uri = beside(doc).firstOrNull { it.name == name }?.id?.let(Uri::parse)
+                    ?: DocumentsContract.createDocument(resolver, Uri.parse(doc.parent), "application/octet-stream", name)
+                    ?: throw java.io.IOException("could not make a copy beside the score")
+                backup = uri
+                writeTo(uri, bytes)
+            },
+            writeInPlace = { writeTo(Uri.parse(doc.id), bytes) },
+            dropBackup = { backup?.let { DocumentsContract.deleteDocument(resolver, it) } },
+        )
+    }
+
+    private fun writeTo(uri: Uri, bytes: ByteArray) {
+        (resolver.openOutputStream(uri, "wt") ?: throw java.io.IOException("could not open $uri"))
+            .use { it.write(bytes) }
     }
 
     override fun create(name: String, text: String): Doc? {
@@ -77,7 +101,9 @@ class Workspace(private val context: Context, val tree: Uri) : Folder {
     private fun createIn(parent: Uri, prefix: String, name: String, text: String): Doc? {
         val uri = DocumentsContract.createDocument(resolver, parent, "text/x-lilypond", name) ?: return null
         val real = query(uri).firstOrNull()?.name ?: name
-        return Doc(uri.toString(), prefix + real, real, parent.toString(), 0).also { write(it, text) }
+        // A new file has nothing to lose, so it is written straight in.
+        return Doc(uri.toString(), prefix + real, real, parent.toString(), 0)
+            .also { writeTo(Uri.parse(it.id), text.toByteArray(Charsets.UTF_8)) }
     }
 
     override fun createBeside(score: Doc, name: String, text: String): Doc? =

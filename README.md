@@ -19,6 +19,8 @@ from and `build/` for how they are built.
 The three dots in the editor's title bar hold Undo and Redo for the source, Save as, Delete,
 Open in another app and Print (the last two for the engraved PDF). Hold a score in the list to
 copy or delete it. Deleting a score takes the PDF and MIDI of the same name with it.
+A save into the chosen folder first writes `name.ly.saving` beside the score and deletes it once
+the score holds the new text; if a save fails, that file keeps what was typed.
 
 Dark mode is a switch in Settings, and the app also follows the phone's own dark setting, or
 Home's dark switch when Home is installed (it asks Home that and nothing else).
