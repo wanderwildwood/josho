@@ -2,6 +2,10 @@
 .gradle/
 .idea/
 build/out-*/
+# Gradle's own output for the root project, beside the build scripts kept in build/
+build/reports/
+build/kotlin/
+build/tmp/
 local.properties
 .kotlin/
 signing/
