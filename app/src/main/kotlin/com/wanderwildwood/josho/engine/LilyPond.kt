@@ -286,9 +286,9 @@ class LilyPond(private val context: Context) {
         private const val DONE = "\u001fjosho-done "
         /** The paper for scores that name none. */
         private const val PAPER = "a6"
-        /** Scores per kept LilyPond before a fresh one. */
         /** Held by a compile from setting up to its PDF beside the score; there is one work folder. */
         val workLock = Any()
+        /** Scores per kept LilyPond before a fresh one. */
         private const val SERVER_RUNS = 25
         private const val SERVER_LIMIT_MS = 120_000L
         /** Filling the Scheme cache (debug builds only) takes far longer than a compile. */
