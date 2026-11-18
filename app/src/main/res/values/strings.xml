@@ -25,6 +25,8 @@
     <string name="compile_too_long">LilyPond took longer than two minutes and was stopped.</string>
     <string name="read_failed">This score could not be read. Nothing in it was changed.</string>
     <string name="save_failed">Could not save the score. Back again leaves without saving.</string>
+    <!-- A save that failed while staying in the score (Ctrl+S) -->
+    <string name="save_failed_stay">Could not save the score.</string>
     <string name="compile_could_not_start">LilyPond could not start: %1$s</string>
     <string name="saved_pdf">%1$s saved beside the score.</string>
     <string name="no_score_yet">Press Compile to engrave the score.</string>

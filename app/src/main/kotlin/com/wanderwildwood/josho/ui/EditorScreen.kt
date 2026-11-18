@@ -183,33 +183,46 @@ fun EditorScreen(
         engraved = withContext(Dispatchers.IO) { runCatching { pdfBeside(folder, doc) }.getOrNull() }
     }
 
+    // Leaving with a save that failed: the first Back stays and says so; a second one leaves.
+    // Only straight after that warning: a save that works, or more typing, takes it back, so a
+    // later failed save on Back warns again before anything is left behind.
+    var leaveUnsaved by remember(doc.id) { mutableStateOf(false) }
+
     /** Every change to the source comes through here, so it can be taken back. */
     fun edit(v: TextFieldValue) {
         history.record(EditHistory.Snapshot(v.text, v.selection.start, v.selection.end), SystemClock.uptimeMillis())
+        if (v.text != text?.text) leaveUnsaved = false
         text = v
     }
 
     fun restore(step: EditHistory.Snapshot?) {
-        if (step != null) text = TextFieldValue(step.text, TextRange(step.start, step.end))
+        if (step == null) return
+        if (step.text != text?.text) leaveUnsaved = false
+        text = TextFieldValue(step.text, TextRange(step.start, step.end))
     }
 
-    /** True when what is typed is in the folder. */
-    fun save(): Boolean {
+    /** [t] is in the folder now: a warning about an earlier failed save no longer holds. */
+    fun saved(t: String) {
+        savedText = t
+        leaveUnsaved = false
+        if (status == context.getString(R.string.save_failed) || status == context.getString(R.string.save_failed_stay)) status = ""
+    }
+
+    /** True when what is typed is in the folder. [leaving]: asked by Back, whose warning says a second Back leaves. */
+    fun save(leaving: Boolean = false): Boolean {
         val t = text?.text ?: return true
         if (t == savedText) return true
         return runCatching { folder.write(doc, t) }
-            .onSuccess { savedText = t }
+            .onSuccess { saved(t) }
             .onFailure {
                 Log.w(TAG, "could not save the score: ${it.javaClass.simpleName}")
-                status = context.getString(R.string.save_failed)
+                status = context.getString(if (leaving) R.string.save_failed else R.string.save_failed_stay)
             }
             .isSuccess
     }
 
-    // Leaving with a save that failed: the first Back stays and says so; a second one leaves.
-    var leaveUnsaved by remember(doc.id) { mutableStateOf(false) }
     fun saveAndLeave() {
-        if (save() || leaveUnsaved) onBack() else leaveUnsaved = true
+        if (save(leaving = true) || leaveUnsaved) onBack() else leaveUnsaved = true
     }
 
     // Out of sight (another app, the screen off), what is typed is saved, so a phone that then
@@ -222,7 +235,7 @@ fun EditorScreen(
                 if (t != null && t != savedText) {
                     scope.launch {
                         val ok = withContext(Dispatchers.IO) { runCatching { folder.write(doc, t) }.isSuccess }
-                        if (ok) savedText = t
+                        if (ok) saved(t)
                     }
                 }
             }
@@ -260,7 +273,7 @@ fun EditorScreen(
             busy = false
             compiles++
             // Written before compiling, whatever came of it after; not when the write itself failed.
-            if (written) savedText = t
+            if (written) saved(t)
             outcome.onFailure {
                 Log.e(TAG, "compile failed: ${it.javaClass.simpleName}")
                 status = context.getString(R.string.compile_could_not_start, it.message ?: it.javaClass.simpleName)
