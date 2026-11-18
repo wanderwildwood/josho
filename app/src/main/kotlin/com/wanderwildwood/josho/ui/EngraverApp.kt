@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -63,7 +64,8 @@ fun EngraverApp(
 
     var folderUri by remember { mutableStateOf(prefs.folder) }
     val folder: Folder = remember(folderUri) { folderUri?.let { Workspace(context, it) } ?: LocalFolder(context) }
-    var screen by remember { mutableStateOf(if (autoCompile) Screen.Editor else Screen.Files) }
+    // Kept when the screen is rebuilt: the editor then opens the last score again (below).
+    var screen by rememberSaveable { mutableStateOf(if (autoCompile) Screen.Editor else Screen.Files) }
     var about by remember { mutableStateOf(false) }
     var textSize by remember { mutableIntStateOf(prefs.textSize) }
     var turn by remember { mutableStateOf(prefs.turn) }

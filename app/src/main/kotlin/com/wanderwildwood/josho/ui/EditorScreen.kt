@@ -226,17 +226,18 @@ fun EditorScreen(
     }
 
     // Out of sight (another app, the screen off), what is typed is saved, so a phone that then
-    // ends the app does not take it along.
+    // ends the app does not take it along. Written there and then, as Back's save is: when the
+    // screen is being rebuilt, the stop and the end of this screen come in one go, and a save
+    // put off until after would be dropped with the screen.
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, doc.id) {
         val watch = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
                 val t = text?.text
                 if (t != null && t != savedText) {
-                    scope.launch {
-                        val ok = withContext(Dispatchers.IO) { runCatching { folder.write(doc, t) }.isSuccess }
-                        if (ok) saved(t)
-                    }
+                    runCatching { folder.write(doc, t) }
+                        .onSuccess { saved(t) }
+                        .onFailure { Log.w(TAG, "could not save the score on leaving: ${it.javaClass.simpleName}") }
                 }
             }
         }
