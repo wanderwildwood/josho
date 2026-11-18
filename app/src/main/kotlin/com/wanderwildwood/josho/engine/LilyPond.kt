@@ -129,8 +129,8 @@ class LilyPond(private val context: Context) {
         // Filling the Scheme cache (debug builds) wants a fresh process; so does a server that
         // has done its share, so memory from many scores never piles up.
         serverTimedOut = false
-        val kept = if (autoCompile) null else runCatching { viaServer(dir, name) }
-            .onFailure { stop() }.getOrNull()
+        val tried = if (autoCompile) null else runCatching { viaServer(dir, name) }.onFailure { stop() }
+        val kept = tried?.getOrNull()
         // After a score in the kept LilyPond, a quick look over the prefix: anything changed
         // there and the kept LilyPond goes, so the next start checks it in full and unpacks it
         // again. The score that changed it has run; none after it runs on what it wrote.
@@ -138,6 +138,8 @@ class LilyPond(private val context: Context) {
             stop()
             lastSeen = null
         }
+        // Out of memory is not LilyPond stopping: running the score again would only do it again.
+        tried?.exceptionOrNull()?.let { if (it is OutOfMemoryError) throw it }
         // A score that ran past the limit would only run past it again on its own.
         val (exit, log) = kept
             ?: if (serverTimedOut) 1 to context.getString(R.string.compile_too_long) else oneShot(dir, name, autoCompile)
@@ -225,13 +227,13 @@ class LilyPond(private val context: Context) {
             try { Thread.sleep(SERVER_LIMIT_MS); serverTimedOut = true; p.destroy() } catch (_: InterruptedException) {}
         }.apply { isDaemon = true; start() }
         try {
-            val log = StringBuilder()
+            val log = CappedLog()
             while (true) {
-                val line = out.readLine() ?: error("LilyPond stopped")
+                val line = readLineAtMost(out) ?: error("LilyPond stopped")
                 if (line.startsWith(DONE)) {
-                    return (line.removePrefix(DONE).trim().toIntOrNull() ?: 1) to log.toString()
+                    return (line.removePrefix(DONE).trim().toIntOrNull() ?: 1) to log.text(::leftOut)
                 }
-                log.append(line).append('\n')
+                log.add(line)
             }
         } finally {
             watchdog.interrupt()
@@ -245,19 +247,29 @@ class LilyPond(private val context: Context) {
         val p = pb.start()
         // The same limit as the kept LilyPond's, so a score that hangs it cannot hold every
         // later compile behind it. The output is read beside the wait.
-        val log = StringBuilder()
+        val log = CappedLog()
         val reader = Thread {
-            runCatching { p.inputStream.bufferedReader().forEachLine { synchronized(log) { log.append(it).append('\n') } } }
+            runCatching {
+                val input = p.inputStream.bufferedReader()
+                while (true) {
+                    val line = readLineAtMost(input) ?: break
+                    synchronized(log) { log.add(line) }
+                }
+            }
         }.apply { isDaemon = true; start() }
         val limit = if (autoCompile) AUTO_COMPILE_LIMIT_MS else SERVER_LIMIT_MS
         if (!p.waitFor(limit, java.util.concurrent.TimeUnit.MILLISECONDS)) {
             p.destroyForcibly()
             reader.join(2_000)
-            return 1 to synchronized(log) { log.toString() } + context.getString(R.string.compile_too_long)
+            return 1 to synchronized(log) { log.text(::leftOut) } + context.getString(R.string.compile_too_long)
         }
         reader.join(5_000)
-        return p.exitValue() to synchronized(log) { log.toString() }
+        return p.exitValue() to synchronized(log) { log.text(::leftOut) }
     }
+
+    /** The line that stands in the log for the lines [CappedLog] did not keep. */
+    private fun leftOut(lines: Int): String =
+        context.resources.getQuantityString(R.plurals.log_left_out, lines, lines)
 
     private fun processBuilder(dir: File, command: List<String>, autoCompile: Boolean): ProcessBuilder {
         val pb = ProcessBuilder(command)

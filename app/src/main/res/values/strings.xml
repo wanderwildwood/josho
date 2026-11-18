@@ -23,6 +23,11 @@
     <string name="compile_failed">LilyPond stopped with errors. See Log.</string>
     <!-- Added to the log when a compile ran past its two-minute limit and was stopped -->
     <string name="compile_too_long">LilyPond took longer than two minutes and was stopped.</string>
+    <!-- In the log, where a score printed so much that the middle of it was not kept -->
+    <plurals name="log_left_out">
+        <item quantity="one">(%1$d more line here, not kept)</item>
+        <item quantity="other">(%1$d more lines here, not kept)</item>
+    </plurals>
     <string name="read_failed">This score could not be read. Nothing in it was changed.</string>
     <string name="read_too_large">This score is larger than 2 MB, more than Engraver opens. Nothing in it was changed.</string>
     <string name="compile_too_large">This score is larger than 2 MB, more than Engraver compiles.</string>
