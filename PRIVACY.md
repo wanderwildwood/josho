@@ -22,6 +22,9 @@ files into its own storage so LilyPond can follow `\include`; that copy is repla
 compile and goes when the app is uninstalled. Nothing is backed up to a cloud or carried over
 in a phone-to-phone transfer.
 
+If Home (`com.wanderwildwood.iori`) is installed, Engraver asks it whether its dark switch is
+on, so the two follow one switch. That is all it reads from Home, and it sends Home nothing.
+
 Open in another app and Print hand one engraved PDF to the app or the printer you choose, when
 you ask and not otherwise. What that app does with it is its own affair. Deleting a score in
 Engraver deletes the PDF and MIDI of the same name beside it.

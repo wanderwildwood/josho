@@ -20,7 +20,8 @@ The three dots in the editor's title bar hold Undo and Redo for the source, Save
 Open in another app and Print (the last two for the engraved PDF). Hold a score in the list to
 copy or delete it. Deleting a score takes the PDF and MIDI of the same name with it.
 
-Dark mode is a switch in Settings, and the app also follows the phone's own dark setting.
+Dark mode is a switch in Settings, and the app also follows the phone's own dark setting, or
+Home's dark switch when Home is installed (it asks Home that and nothing else).
 
 ## What it does not do
 
