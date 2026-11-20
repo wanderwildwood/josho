@@ -1,15 +1,20 @@
 package com.wanderwildwood.josho
 
 import com.wanderwildwood.josho.ui.DarkSelection
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalCursorBlinkEnabled
 import com.mudita.mmd.ThemeMMD
 import com.wanderwildwood.josho.ui.EngraverApp
 import com.wanderwildwood.josho.ui.houseTypography
+import com.wanderwildwood.josho.ui.isShare
 import com.wanderwildwood.josho.ui.monochrome
 
 /**
@@ -22,6 +27,9 @@ import com.wanderwildwood.josho.ui.monochrome
 class MainActivity : ComponentActivity() {
     private val turner = TurnWithPhone(this)
     private var turning = false
+
+    /** A score handed over through the Share menu, until the app has made it into a file. */
+    private var shared by mutableStateOf<Intent?>(null)
 
     /**
      * Hold the screen the way the reader chose (as Typewriter does). Three of the four are an
@@ -56,8 +64,16 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (isShare(intent)) shared = intent
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Only a fresh start: a screen rebuilt later must not make the same score twice.
+        if (savedInstanceState == null && isShare(intent)) shared = intent
         // Asked for before the first frame, so the panel is drawn once, the right way round.
         turn(Prefs(this).turn)
         val autoCompile = BuildConfig.DEBUG && intent.getBooleanExtra("compile", false)
@@ -72,6 +88,8 @@ class MainActivity : ComponentActivity() {
                         autoCompile = autoCompile,
                         autoCompileScheme = autoCompileScheme,
                         onTurn = ::turn,
+                        shared = shared,
+                        onSharedTaken = { shared = null },
                         layout = if (BuildConfig.DEBUG) intent.getStringExtra("layout") else null,
                     )
                 } }

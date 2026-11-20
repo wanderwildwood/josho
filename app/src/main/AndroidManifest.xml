@@ -55,6 +55,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Share to Engraver: text (an AI app's answer, say) or a .ly file becomes a new score. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
         </activity>
 
         <!-- Lets "Open in another app" and Print hand on a PDF from the app's own sample folder

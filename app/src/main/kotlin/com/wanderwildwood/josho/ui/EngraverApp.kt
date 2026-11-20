@@ -26,6 +26,11 @@ import com.wanderwildwood.josho.engine.Doc
 import com.wanderwildwood.josho.engine.Folder
 import com.wanderwildwood.josho.engine.LilyPond
 import com.wanderwildwood.josho.engine.LocalFolder
+import com.wanderwildwood.josho.engine.NotText
+import com.wanderwildwood.josho.engine.TooLarge
+import com.wanderwildwood.josho.engine.freeName
+import com.wanderwildwood.josho.engine.scoreFromShared
+import com.wanderwildwood.josho.engine.sharedScoreName
 import com.wanderwildwood.josho.engine.Workspace
 import com.wanderwildwood.josho.engine.copyScore
 import com.wanderwildwood.josho.engine.deleteScore
@@ -46,6 +51,8 @@ fun EngraverApp(
     autoCompileScheme: Boolean = false,
     onTurn: (Turn) -> Unit = {},
     layout: String? = null,
+    shared: Intent? = null,
+    onSharedTaken: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
@@ -97,6 +104,33 @@ fun EngraverApp(
             open = list.firstOrNull { it.path == prefs.lastScore } ?: list.firstOrNull()
             if (open == null) screen = Screen.Files
         }
+    }
+
+    // Shared from another app (an AI app's answer, a .ly file): a new score in the folder, opened.
+    LaunchedEffect(shared) {
+        val intent = shared ?: return@LaunchedEffect
+        val made = withContext(Dispatchers.IO) {
+            runCatching {
+                val got = readShared(context, intent)
+                val text = scoreFromShared(got.text)
+                val taken = runCatching { folder.scores().map { it.name } }.getOrDefault(emptyList())
+                folder.create(freeName(sharedScoreName(got.fileName), taken), text)
+            }
+        }
+        val doc = made.getOrNull()
+        if (doc != null) {
+            open = doc
+            prefs.lastScore = doc.path
+            screen = Screen.Editor
+        } else {
+            trouble = when (made.exceptionOrNull()) {
+                is TooLarge -> R.string.share_too_large
+                is NotText -> R.string.share_not_text
+                else -> R.string.share_failed
+            }
+        }
+        reload++
+        onSharedTaken()
     }
 
     val pick = rememberLauncherForActivityResult(FilesOpenTree()) { uri: Uri? ->

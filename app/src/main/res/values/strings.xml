@@ -69,6 +69,9 @@
     <string name="save_as_failed">The copy could not be saved.</string>
     <string name="copy_failed">The copy could not be made.</string>
     <string name="delete_failed">The score could not be deleted.</string>
+    <string name="share_failed">What was shared could not be made into a score.</string>
+    <string name="share_not_text">Only text or a LilyPond file can be shared to Engraver.</string>
+    <string name="share_too_large">What was shared is larger than 2 MB, more than Engraver opens.</string>
     <string name="no_pdf_app">No app on this device opens a PDF.</string>
     <string name="print_failed">Printing could not start.</string>
 
