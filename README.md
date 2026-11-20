@@ -16,8 +16,10 @@ one with its own `\paper` size keeps it. Tap the engraved score to read it on th
 score has a `\midi` block, to hear it played by the phone's own synthesizer. See `SOURCES.md` for where every bundled binary comes
 from and `build/` for how they are built.
 
-The three dots in the editor's title bar hold Undo and Redo for the source, Save as, Delete,
-Open in another app and Print (the last two for the engraved PDF). Hold a score in the list to
+The three dots in the editor's title bar hold Undo and Redo for the source, Re-indent, Save as,
+Delete, Open in another app and Print (the last two for the engraved PDF). Re-indent sets the
+spaces at the start of each line the way Frescobaldi does, using a port of python-ly's indenter;
+Undo takes it back in one step. Hold a score in the list to
 copy or delete it. Deleting a score takes the PDF and MIDI of the same name with it.
 A save into the chosen folder first writes `name.ly.saving` beside the score and deletes it once
 the score holds the new text; if a save fails, that file keeps what was typed.

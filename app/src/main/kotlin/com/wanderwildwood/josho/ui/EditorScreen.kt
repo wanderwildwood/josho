@@ -81,6 +81,7 @@ import com.mudita.mmd.components.text.TextMMD
 import com.wanderwildwood.josho.R
 import com.wanderwildwood.josho.engine.Doc
 import com.wanderwildwood.josho.engine.EditHistory
+import com.wanderwildwood.josho.engine.Indent
 import com.wanderwildwood.josho.engine.Folder
 import com.wanderwildwood.josho.engine.LilyPond
 import com.wanderwildwood.josho.engine.LogLine
@@ -206,6 +207,13 @@ fun EditorScreen(
         if (step == null) return
         if (step.text != text?.text) dropSaveWarning()
         text = TextFieldValue(step.text, TextRange(step.start, step.end))
+    }
+
+    /** Frescobaldi's Re-indent: only the white space at the start of lines changes, as one step undo takes back. */
+    fun reindent() {
+        val v = text ?: return
+        val r = Indent.reindent(v.text)
+        if (r.text != v.text) edit(TextFieldValue(r.text, TextRange(r.moved(v.selection.start), r.moved(v.selection.end))))
     }
 
     /** [t] is in the folder now. */
@@ -375,6 +383,10 @@ fun EditorScreen(
                         MenuRow(stringResource(R.string.menu_redo), enabled = history.canRedo) {
                             menu = false
                             restore(history.redo())
+                        }
+                        MenuRow(stringResource(R.string.menu_reindent), enabled = text != null) {
+                            menu = false
+                            reindent()
                         }
                         MenuRow(stringResource(R.string.menu_save_as), enabled = text != null) {
                             menu = false

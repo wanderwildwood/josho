@@ -50,6 +50,7 @@
     <string name="cd_more">More</string>
     <string name="menu_undo">Undo</string>
     <string name="menu_redo">Redo</string>
+    <string name="menu_reindent">Re-indent</string>
     <string name="menu_save_as">Save as</string>
     <string name="menu_copy">Copy</string>
     <string name="menu_delete">Delete</string>

@@ -1,0 +1,8 @@
+{
+  "uniqueId": "python-ly",
+  "name": "python-ly indenter",
+  "description": "Re-indent in the editor is a port of python-ly's indenter, the one Frescobaldi uses.",
+  "developers": [{ "name": "Wilbert Berendsen" }],
+  "website": "https://github.com/frescobaldi/python-ly",
+  "licenses": ["GPL-3.0-or-later"]
+}
