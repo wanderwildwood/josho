@@ -61,6 +61,8 @@ For updates without doing this by hand, add this repository to
 
     https://github.com/wanderwildwood/josho
 
+Questions, ideas, or just saying hello: the wander the dev Discord, <https://discord.gg/UMW8yJg7dQ>
+
 ## Thanks
 
 Thanks to [zyny](https://forum.mudita.com/u/zyny) on the Mudita forum, whose request started
