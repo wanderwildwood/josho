@@ -16,6 +16,10 @@ one with its own `\paper` size keeps it. Tap the engraved score to read it on th
 score has a `\midi` block, to hear it played by the phone's own synthesizer. See `SOURCES.md` for where every bundled binary comes
 from and `build/` for how they are built.
 
+Text or a `.ly` file shared to Engraver from another app becomes a new score in the folder and
+opens; when the text holds a LilyPond code block, that block is taken. Anything over 2 MB is
+turned away with a message.
+
 The three dots in the editor's title bar hold Undo and Redo for the source, Re-indent, Save as,
 Delete, Open in another app and Print (the last two for the engraved PDF). Re-indent sets the
 spaces at the start of each line the way Frescobaldi does, using a port of python-ly's indenter;
